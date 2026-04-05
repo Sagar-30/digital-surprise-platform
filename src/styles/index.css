@@ -55,3 +55,28 @@
   background-size: 200% 100%;
   animation: shine 2s infinite;
 }
+
+/* Add to existing index.css */
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900;
+  }
+}
+
+/* Custom scrollbar for cute theme */
+::-webkit-scrollbar-track {
+  @apply bg-pink-100 dark:bg-pink-900/20;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-pink-400 dark:bg-pink-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-pink-500 dark:bg-pink-500;
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
+}
