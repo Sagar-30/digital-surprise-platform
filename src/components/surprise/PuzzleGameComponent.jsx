@@ -1,53 +1,53 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDrag, useDrop, DndProvider } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 
-const Piece = ({ piece, index, onDrop, isCompleted }) => {
+const Piece = ({ piece, index, onDrop, isCompleted, gridSize }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'PIECE',
-    item: { index, pieceId: piece.id },
+    item: { index },
     canDrag: !isCompleted,
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
   });
-  
-  const [{ isOver }, drop] = useDrop({
+
+  const [, drop] = useDrop({
     accept: 'PIECE',
     drop: (item) => {
       if (item.index !== index && !isCompleted) {
         onDrop(item.index, index);
       }
     },
-    canDrop: () => !isCompleted,
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
-    }),
   });
-  
+
   return (
-    <motion.div
+    <div
       ref={(node) => drag(drop(node))}
-      className={`relative rounded-lg overflow-hidden ${
-        isDragging ? 'opacity-0' : 'opacity-100'
-      } ${isOver ? 'ring-4 ring-pink-500 shadow-lg scale-95' : ''} ${
-        isCompleted ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
-      }`}
-      style={{
-        aspectRatio: '1/1',
-        touchAction: 'none'
-      }}
-      whileTap={{ scale: 0.95 }}
-      transition={{ duration: 0.1 }}
+      className="relative overflow-hidden rounded-lg"
+      style={{ aspectRatio: '1/1' }}
     >
-      <img
-        src={piece.imageData}
-        alt={`Puzzle piece ${index}`}
-        className="w-full h-full object-cover pointer-events-none"
-        draggable={false}
-      />
-    </motion.div>
+      <div
+        style={{
+          position: 'absolute',
+          width: `${gridSize * 100}%`,
+          height: `${gridSize * 100}%`,
+          transform: `translate(-${piece.col * (100 / gridSize)}%, -${piece.row * (100 / gridSize)}%)`,
+        }}
+      >
+        <img
+          src={piece.imageUrl}
+          alt=""
+          draggable={false}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'block',
+          }}
+        />
+      </div>
+    </div>
   );
 };
 
@@ -59,107 +59,57 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
   const [startTime, setStartTime] = useState(null);
   const [timeSpent, setTimeSpent] = useState(0);
   const [showHint, setShowHint] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Function to crop image into pieces
-  const cropImageIntoPieces = useCallback((img, size) => {
-    return new Promise((resolve) => {
-      const pieceWidth = img.width / size;
-      const pieceHeight = img.height / size;
-      const pieces = [];
-      let loadedCount = 0;
-
-      for (let row = 0; row < size; row++) {
-        for (let col = 0; col < size; col++) {
-          // Create canvas for each piece
-          const canvas = document.createElement('canvas');
-          canvas.width = pieceWidth;
-          canvas.height = pieceHeight;
-          const ctx = canvas.getContext('2d');
-          
-          // Draw the specific piece
-          ctx.drawImage(
-            img,
-            col * pieceWidth,
-            row * pieceHeight,
-            pieceWidth,
-            pieceHeight,
-            0,
-            0,
-            pieceWidth,
-            pieceHeight
-          );
-          
-          // Convert canvas to data URL
-          const pieceDataUrl = canvas.toDataURL();
-          
-          pieces.push({
-            id: row * size + col,
-            correctIndex: row * size + col,
-            currentIndex: row * size + col,
-            row: row,
-            col: col,
-            imageData: pieceDataUrl,
-          });
-          
-          loadedCount++;
-          if (loadedCount === size * size) {
-            resolve(pieces);
-          }
-        }
+  // Generate puzzle pieces
+  const generatePuzzle = () => {
+    const newPieces = [];
+    
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        const id = row * gridSize + col;
+        newPieces.push({
+          id: id,
+          correctIndex: id,
+          currentIndex: id,
+          row: row,
+          col: col,
+          imageUrl: imageUrl,
+        });
       }
-    });
-  }, []);
+    }
+    
+    // Shuffle pieces
+    for (let i = newPieces.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newPieces[i].currentIndex, newPieces[j].currentIndex] =
+        [newPieces[j].currentIndex, newPieces[i].currentIndex];
+    }
+    
+    // Sort by current index for display
+    const sortedPieces = [...newPieces].sort((a, b) => a.currentIndex - b.currentIndex);
+    setPieces(sortedPieces);
+    setStartTime(Date.now());
+    setMoves(0);
+    setCompleted(false);
+  };
 
-  // Load and split image
+  // Initialize puzzle when imageUrl or gridSize changes
   useEffect(() => {
-    if (!imageUrl) return;
-    
-    setIsLoading(true);
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.src = imageUrl;
-    
-    img.onload = async () => {
-      try {
-        const piecesArray = await cropImageIntoPieces(img, gridSize);
-        
-        // Shuffle pieces
-        for (let i = piecesArray.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [piecesArray[i].currentIndex, piecesArray[j].currentIndex] = 
-          [piecesArray[j].currentIndex, piecesArray[i].currentIndex];
-        }
-        
-        // Sort by current index for display
-        const sortedPieces = [...piecesArray].sort((a, b) => a.currentIndex - b.currentIndex);
-        setPieces(sortedPieces);
-        setStartTime(Date.now());
-        setMoves(0);
-        setCompleted(false);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error cropping image:', error);
-        setIsLoading(false);
-      }
-    };
-    
-    img.onerror = () => {
-      console.error('Failed to load image');
-      setIsLoading(false);
-    };
-  }, [imageUrl, gridSize, cropImageIntoPieces]);
+    if (imageUrl) {
+      generatePuzzle();
+    }
+  }, [imageUrl, gridSize]);
 
   // Timer
   useEffect(() => {
     let timer;
-    if (startTime && !completed && !isLoading) {
+    if (startTime && !completed) {
       timer = setInterval(() => {
         setTimeSpent(Math.floor((Date.now() - startTime) / 1000));
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [startTime, completed, isLoading]);
+  }, [startTime, completed]);
 
   const handleDrop = (dragIndex, dropIndex) => {
     if (completed) return;
@@ -196,30 +146,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
   };
 
   const resetGame = () => {
-    if (imageUrl) {
-      setIsLoading(true);
-      const img = new Image();
-      img.crossOrigin = "Anonymous";
-      img.src = imageUrl;
-      
-      img.onload = async () => {
-        const piecesArray = await cropImageIntoPieces(img, gridSize);
-        
-        // Shuffle pieces
-        for (let i = piecesArray.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [piecesArray[i].currentIndex, piecesArray[j].currentIndex] = 
-          [piecesArray[j].currentIndex, piecesArray[i].currentIndex];
-        }
-        
-        const sortedPieces = [...piecesArray].sort((a, b) => a.currentIndex - b.currentIndex);
-        setPieces(sortedPieces);
-        setStartTime(Date.now());
-        setMoves(0);
-        setCompleted(false);
-        setIsLoading(false);
-      };
-    }
+    generatePuzzle();
   };
 
   const getHint = () => {
@@ -232,17 +159,6 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
     { value: 4, label: 'Medium', icon: '🤔', size: '4x4' },
     { value: 5, label: 'Hard', icon: '🔥', size: '5x5' }
   ];
-
-  if (isLoading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-5xl mb-4 animate-pulse">🧩</div>
-          <p className="text-gray-600 dark:text-gray-300">Preparing puzzle pieces...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
@@ -345,6 +261,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
                   index={idx}
                   onDrop={handleDrop}
                   isCompleted={completed}
+                  gridSize={gridSize}
                 />
               ))}
             </div>
