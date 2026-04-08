@@ -1,53 +1,61 @@
-import { useState, useEffect,useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrag, useDrop, DndProvider } from 'react-dnd';
+import { TouchBackend } from 'react-dnd-touch-backend';
 
 const Piece = ({ piece, index, onDrop, isCompleted, gridSize }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'PIECE',
-    item: { index },
+    item: { index, pieceId: piece.id },
     canDrag: !isCompleted,
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
   });
-
-  const [, drop] = useDrop({
+  
+  const [{ isOver }, drop] = useDrop({
     accept: 'PIECE',
     drop: (item) => {
       if (item.index !== index && !isCompleted) {
         onDrop(item.index, index);
       }
     },
+    canDrop: () => !isCompleted,
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver(),
+    }),
   });
-
+  
+  // Calculate background position for this piece
+  const pieceWidth = 100 / gridSize;
+  const bgPosX = -(piece.col * pieceWidth);
+  const bgPosY = -(piece.row * pieceWidth);
+  
   return (
-    <div
+    <motion.div
       ref={(node) => drag(drop(node))}
-      className="relative overflow-hidden rounded-lg"
-      style={{ aspectRatio: '1/1' }}
+      className={`relative rounded-lg overflow-hidden ${
+        isDragging ? 'opacity-0' : 'opacity-100'
+      } ${isOver ? 'ring-4 ring-pink-500 shadow-lg scale-95' : ''} ${
+        isCompleted ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+      }`}
+      style={{
+        aspectRatio: '1/1',
+        touchAction: 'none'
+      }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ duration: 0.1 }}
     >
       <div
+        className="w-full h-full"
         style={{
-          position: 'absolute',
-          width: `${gridSize * 100}%`,
-          height: `${gridSize * 100}%`,
-          transform: `translate(-${piece.col * (100 / gridSize)}%, -${piece.row * (100 / gridSize)}%)`,
+          backgroundImage: `url(${piece.imageUrl})`,
+          backgroundPosition: `${bgPosX}% ${bgPosY}%`,
+          backgroundSize: `${gridSize * 100}%`,
+          backgroundRepeat: 'no-repeat',
         }}
-      >
-        <img
-          src={piece.imageUrl}
-          alt=""
-          draggable={false}
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'block',
-          }}
-        />
-      </div>
-    </div>
+      />
+    </motion.div>
   );
 };
 
@@ -59,113 +67,46 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
   const [startTime, setStartTime] = useState(null);
   const [timeSpent, setTimeSpent] = useState(0);
   const [showHint, setShowHint] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageElement, setImageElement] = useState(null);
 
-  // Load image and create pieces
-  useEffect(() => {
-    if (imageUrl) {
-      loadImage();
-    }
-  }, [imageUrl]);
-
-  const loadImage = () => {
-    const img = new Image();
-    img.src = imageUrl;
-
-    // img.onload = () => {
-    //   setImageElement(img);
-    //   setImageLoaded(true);
-    //   createPieces(img, gridSize);
-    // };
-    img.onload = () => {
-      setImageElement({
-        img,
-        width: img.width,
-        height: img.height
-      });
-      setImageLoaded(true);
-      createPieces(img, gridSize);
-    };
-
-    img.onerror = () => {
-      console.error('Failed to load image');
-      setImageLoaded(false);
-    };
-  };
-
-  // const createPieces = (img, size) => {
-  //   const newPieces = [];
-  //   // const pieceWidth = 100 / size;
-  //   const pieceWidth = size > 1 ? 100 / (size - 1) : 0;
-
-  //   for (let row = 0; row < size; row++) {
-  //     for (let col = 0; col < size; col++) {
-  //       const id = row * size + col;
-  //       newPieces.push({
-  //         id: id,
-  //         correctIndex: id,
-  //         currentIndex: id,
-  //         row: row,
-  //         col: col,
-  //         imageUrl: imageUrl,
-  //         // x: -(col * pieceWidth),
-  //         // y: -(row * pieceWidth),
-  //         x: col * pieceWidth,
-  //         y: row * pieceWidth,
-  //       });
-  //     }
-  //   }
-
-  //   // Shuffle pieces
-  //   for (let i = newPieces.length - 1; i > 0; i--) {
-  //     const j = Math.floor(Math.random() * (i + 1));
-  //     [newPieces[i].currentIndex, newPieces[j].currentIndex] =
-  //       [newPieces[j].currentIndex, newPieces[i].currentIndex];
-  //   }
-
-  //   // Sort by current index for display
-  //   const sortedPieces = [...newPieces].sort((a, b) => a.currentIndex - b.currentIndex);
-  //   setPieces(sortedPieces);
-  //   setStartTime(Date.now());
-  //   setMoves(0);
-  //   setCompleted(false);
-  // };
-
-  const createPieces = (imgObj, size) => {
+  // Generate puzzle pieces
+  const generatePuzzle = () => {
     const newPieces = [];
-
-    for (let row = 0; row < size; row++) {
-      for (let col = 0; col < size; col++) {
-        const id = row * size + col;
-
+    
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        const id = row * gridSize + col;
         newPieces.push({
-          id,
+          id: id,
           correctIndex: id,
           currentIndex: id,
-          row,
-          col,
-          imageUrl,
+          row: row,
+          col: col,
+          imageUrl: imageUrl,
         });
       }
     }
-
-    // shuffle
+    
+    // Shuffle pieces
     for (let i = newPieces.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [newPieces[i].currentIndex, newPieces[j].currentIndex] =
         [newPieces[j].currentIndex, newPieces[i].currentIndex];
     }
-
-    const sorted = [...newPieces].sort((a, b) => a.currentIndex - b.currentIndex);
-    setPieces(sorted);
+    
+    // Sort by current index for display
+    const sortedPieces = [...newPieces].sort((a, b) => a.currentIndex - b.currentIndex);
+    setPieces(sortedPieces);
+    setStartTime(Date.now());
+    setMoves(0);
+    setCompleted(false);
   };
 
+  // Initialize puzzle when imageUrl or gridSize changes
   useEffect(() => {
-    if (imageLoaded && imageElement) {
-      createPieces(imageElement, gridSize);
+    if (imageUrl) {
+      generatePuzzle();
     }
-  }, [gridSize, imageLoaded]);
+  }, [imageUrl, gridSize]);
 
   // Timer
   useEffect(() => {
@@ -180,23 +121,22 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
 
   const handleDrop = (dragIndex, dropIndex) => {
     if (completed) return;
-
+    
     setMoves(prev => prev + 1);
-
-    // Create new array with swapped pieces
+    
     const newPieces = [...pieces];
     const dragPiece = newPieces[dragIndex];
     const dropPiece = newPieces[dropIndex];
-
+    
     // Swap current indices
     const tempIndex = dragPiece.currentIndex;
     dragPiece.currentIndex = dropPiece.currentIndex;
     dropPiece.currentIndex = tempIndex;
-
+    
     // Resort by current index
     newPieces.sort((a, b) => a.currentIndex - b.currentIndex);
     setPieces(newPieces);
-
+    
     // Check if solved
     const isSolved = newPieces.every(piece => piece.currentIndex === piece.correctIndex);
     if (isSolved && !completed) {
@@ -214,9 +154,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
   };
 
   const resetGame = () => {
-    if (imageElement) {
-      createPieces(imageElement, gridSize);
-    }
+    generatePuzzle();
   };
 
   const getHint = () => {
@@ -230,19 +168,8 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
     { value: 5, label: 'Hard', icon: '🔥', size: '5x5' }
   ];
 
-  if (!imageLoaded) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-5xl mb-4 animate-pulse">🖼️</div>
-          <p className="text-gray-600 dark:text-gray-300">Loading your puzzle...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
       <div className="min-h-[70vh] flex items-center justify-center p-4">
         <div className="max-w-4xl w-full mx-auto">
           {/* Header */}
@@ -259,7 +186,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               Drag and drop the pieces to reveal the surprise!
             </p>
           </motion.div>
-
+          
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
             <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-3 text-center border border-white/50 dark:border-white/10">
@@ -267,13 +194,13 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               <div className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">{moves}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Moves</div>
             </div>
-
+            
             <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-3 text-center border border-white/50 dark:border-white/10">
               <div className="text-2xl md:text-3xl mb-1">⏱️</div>
               <div className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">{formatTime(timeSpent)}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Time</div>
             </div>
-
+            
             <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-3 text-center border border-white/50 dark:border-white/10">
               <div className="text-2xl md:text-3xl mb-1">{gridSize}x{gridSize}</div>
               <div className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">
@@ -282,7 +209,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               <div className="text-xs text-gray-500 dark:text-gray-400">Difficulty</div>
             </div>
           </div>
-
+          
           {/* Controls */}
           <div className="flex flex-wrap justify-center gap-3 mb-6">
             <select
@@ -296,14 +223,14 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
                 </option>
               ))}
             </select>
-
+            
             <button
               onClick={resetGame}
               className="px-4 py-2 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-white/60 transition-all"
             >
               🔄 New Game
             </button>
-
+            
             <button
               onClick={getHint}
               className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl shadow-lg hover:shadow-pink-500/25 transition-all"
@@ -311,7 +238,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               💡 Hint
             </button>
           </div>
-
+          
           {/* Hint */}
           <AnimatePresence>
             {showHint && (
@@ -325,10 +252,10 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               </motion.div>
             )}
           </AnimatePresence>
-
+          
           {/* Puzzle Grid */}
           <div className="bg-white/20 dark:bg-gray-900/20 backdrop-blur-sm rounded-2xl p-4 border border-white/50 dark:border-white/10 shadow-2xl">
-            <div
+            <div 
               className="grid gap-1 rounded-xl overflow-hidden"
               style={{
                 gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
@@ -343,13 +270,11 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
                   onDrop={handleDrop}
                   isCompleted={completed}
                   gridSize={gridSize}
-                  imageWidth={imageElement?.width}
-                  imageHeight={imageElement?.height}
                 />
               ))}
             </div>
           </div>
-
+          
           {/* Progress */}
           {!completed && pieces.length > 0 && (
             <div className="mt-6">
@@ -369,7 +294,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               </div>
             </div>
           )}
-
+          
           {/* Completion Celebration */}
           <AnimatePresence>
             {completed && (

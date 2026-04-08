@@ -1,32 +1,142 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useDrag, useDrop, DndProvider } from 'react-dnd';
+import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
+import { getEmptyImage } from 'react-dnd-html5-backend';
 
-const Piece = ({ piece, index, onDrop, isCompleted, gridSize }) => {
-  const [{ isDragging }, drag] = useDrag({
+// Custom drag preview component
+const CustomDragPreview = ({ piece, gridSize, imageUrl }) => {
+  return (
+    <div
+      className="rounded-lg overflow-hidden shadow-2xl border-2 border-white"
+      style={{
+        width: 100,
+        height: 100,
+        transform: 'rotate(5deg) scale(0.9)',
+        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)',
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            width: `${gridSize * 100}%`,
+            height: `${gridSize * 100}%`,
+            transform: `translate(-${piece.col * (100 / gridSize)}%, -${piece.row * (100 / gridSize)}%)`,
+          }}
+        >
+          <img
+            src={imageUrl}
+            alt=""
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'block',
+              pointerEvents: 'none',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Drag layer component to show custom preview
+const DragLayer = ({ gridSize, imageUrl }) => {
+  const {
+    isDragging,
+    item,
+    currentOffset,
+  } = useDragLayer((monitor) => ({
+    item: monitor.getItem(),
+    currentOffset: monitor.getSourceClientOffset(),
+    isDragging: monitor.isDragging(),
+  }));
+
+  if (!isDragging || !currentOffset || !item || !item.pieceData) {
+    return null;
+  }
+
+  const { x, y } = currentOffset;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        pointerEvents: 'none',
+        zIndex: 9999,
+        left: 0,
+        top: 0,
+        transform: `translate(${x - 10}px, ${y - 10}px)`,
+      }}
+    >
+      <CustomDragPreview 
+        piece={item.pieceData}
+        gridSize={gridSize}
+        imageUrl={imageUrl}
+      />
+    </div>
+  );
+};
+
+const Piece = ({ piece, index, onDrop, isCompleted, gridSize, imageUrl }) => {
+  const [{ isDragging }, drag, preview] = useDrag({
     type: 'PIECE',
-    item: { index },
+    item: () => ({ 
+      index, 
+      pieceData: piece // Pass piece data for custom preview
+    }),
     canDrag: !isCompleted,
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
   });
 
-  const [, drop] = useDrop({
+  const [{ isOver, canDrop }, drop] = useDrop({
     accept: 'PIECE',
     drop: (item) => {
       if (item.index !== index && !isCompleted) {
         onDrop(item.index, index);
       }
     },
+    canDrop: () => !isCompleted,
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver(),
+      canDrop: !!monitor.canDrop(),
+    }),
   });
+
+  // Hide default HTML5 drag preview
+  useEffect(() => {
+    preview(getEmptyImage(), { captureDraggingState: true });
+  }, [preview]);
+
+  // Determine drop zone style
+  const dropZoneStyle = isOver && canDrop 
+    ? 'ring-4 ring-green-500 bg-green-500/20 scale-95' 
+    : canDrop && !isOver 
+    ? 'ring-2 ring-pink-300 bg-pink-500/10' 
+    : '';
 
   return (
     <div
       ref={(node) => drag(drop(node))}
-      className="relative overflow-hidden rounded-lg"
-      style={{ aspectRatio: '1/1' }}
+      className={`relative overflow-hidden rounded-lg transition-all duration-200 ${
+        isDragging ? 'opacity-0' : 'opacity-100'
+      } ${dropZoneStyle} ${
+        isCompleted ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'
+      }`}
+      style={{ 
+        aspectRatio: '1/1',
+        touchAction: 'none'
+      }}
     >
       <div
         style={{
@@ -37,16 +147,37 @@ const Piece = ({ piece, index, onDrop, isCompleted, gridSize }) => {
         }}
       >
         <img
-          src={piece.imageUrl}
+          src={imageUrl}
           alt=""
           draggable={false}
           style={{
             width: '100%',
             height: '100%',
             display: 'block',
+            pointerEvents: 'none'
           }}
         />
       </div>
+      
+      {/* Drop indicator overlay */}
+      {isOver && canDrop && !isCompleted && (
+        <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 backdrop-blur-sm transition-all duration-200">
+          <div className="bg-white rounded-full p-2 shadow-lg">
+            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+      )}
+      
+      {/* Available drop indicator */}
+      {canDrop && !isOver && !isCompleted && (
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="bg-pink-500/50 rounded-full p-1">
+            <div className="w-2 h-2 bg-white rounded-full"></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -59,46 +190,73 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
   const [startTime, setStartTime] = useState(null);
   const [timeSpent, setTimeSpent] = useState(0);
   const [showHint, setShowHint] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageElement, setImageElement] = useState(null);
 
-  // Generate puzzle pieces
-  const generatePuzzle = () => {
+  // Load image and create pieces
+  useEffect(() => {
+    if (imageUrl) {
+      loadImage();
+    }
+  }, [imageUrl]);
+
+  const loadImage = () => {
+    const img = new Image();
+    img.src = imageUrl;
+
+    img.onload = () => {
+      setImageElement({
+        img,
+        width: img.width,
+        height: img.height
+      });
+      setImageLoaded(true);
+      createPieces(img, gridSize);
+    };
+
+    img.onerror = () => {
+      console.error('Failed to load image');
+      setImageLoaded(false);
+    };
+  };
+
+  const createPieces = (imgObj, size) => {
     const newPieces = [];
-    
-    for (let row = 0; row < gridSize; row++) {
-      for (let col = 0; col < gridSize; col++) {
-        const id = row * gridSize + col;
+
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        const id = row * size + col;
+
         newPieces.push({
-          id: id,
+          id,
           correctIndex: id,
           currentIndex: id,
-          row: row,
-          col: col,
-          imageUrl: imageUrl,
+          row,
+          col,
+          imageUrl,
         });
       }
     }
-    
-    // Shuffle pieces
+
+    // shuffle
     for (let i = newPieces.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [newPieces[i].currentIndex, newPieces[j].currentIndex] =
         [newPieces[j].currentIndex, newPieces[i].currentIndex];
     }
-    
-    // Sort by current index for display
-    const sortedPieces = [...newPieces].sort((a, b) => a.currentIndex - b.currentIndex);
-    setPieces(sortedPieces);
+
+    const sorted = [...newPieces].sort((a, b) => a.currentIndex - b.currentIndex);
+    setPieces(sorted);
     setStartTime(Date.now());
     setMoves(0);
     setCompleted(false);
   };
 
-  // Initialize puzzle when imageUrl or gridSize changes
   useEffect(() => {
-    if (imageUrl) {
-      generatePuzzle();
+    if (imageLoaded && imageElement) {
+      createPieces(imageElement, gridSize);
     }
-  }, [imageUrl, gridSize]);
+  }, [gridSize, imageLoaded]);
 
   // Timer
   useEffect(() => {
@@ -113,22 +271,23 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
 
   const handleDrop = (dragIndex, dropIndex) => {
     if (completed) return;
-    
+
     setMoves(prev => prev + 1);
-    
+
+    // Create new array with swapped pieces
     const newPieces = [...pieces];
     const dragPiece = newPieces[dragIndex];
     const dropPiece = newPieces[dropIndex];
-    
+
     // Swap current indices
     const tempIndex = dragPiece.currentIndex;
     dragPiece.currentIndex = dropPiece.currentIndex;
     dropPiece.currentIndex = tempIndex;
-    
+
     // Resort by current index
     newPieces.sort((a, b) => a.currentIndex - b.currentIndex);
     setPieces(newPieces);
-    
+
     // Check if solved
     const isSolved = newPieces.every(piece => piece.currentIndex === piece.correctIndex);
     if (isSolved && !completed) {
@@ -146,7 +305,9 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
   };
 
   const resetGame = () => {
-    generatePuzzle();
+    if (imageElement) {
+      createPieces(imageElement, gridSize);
+    }
   };
 
   const getHint = () => {
@@ -159,6 +320,17 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
     { value: 4, label: 'Medium', icon: '🤔', size: '4x4' },
     { value: 5, label: 'Hard', icon: '🔥', size: '5x5' }
   ];
+
+  if (!imageLoaded) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-5xl mb-4 animate-pulse">🖼️</div>
+          <p className="text-gray-600 dark:text-gray-300">Loading your puzzle...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
@@ -178,7 +350,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               Drag and drop the pieces to reveal the surprise!
             </p>
           </motion.div>
-          
+
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
             <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-3 text-center border border-white/50 dark:border-white/10">
@@ -186,13 +358,13 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               <div className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">{moves}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Moves</div>
             </div>
-            
+
             <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-3 text-center border border-white/50 dark:border-white/10">
               <div className="text-2xl md:text-3xl mb-1">⏱️</div>
               <div className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">{formatTime(timeSpent)}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Time</div>
             </div>
-            
+
             <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-3 text-center border border-white/50 dark:border-white/10">
               <div className="text-2xl md:text-3xl mb-1">{gridSize}x{gridSize}</div>
               <div className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white">
@@ -201,7 +373,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               <div className="text-xs text-gray-500 dark:text-gray-400">Difficulty</div>
             </div>
           </div>
-          
+
           {/* Controls */}
           <div className="flex flex-wrap justify-center gap-3 mb-6">
             <select
@@ -215,14 +387,14 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
                 </option>
               ))}
             </select>
-            
+
             <button
               onClick={resetGame}
               className="px-4 py-2 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-white/60 transition-all"
             >
               🔄 New Game
             </button>
-            
+
             <button
               onClick={getHint}
               className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl shadow-lg hover:shadow-pink-500/25 transition-all"
@@ -230,7 +402,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               💡 Hint
             </button>
           </div>
-          
+
           {/* Hint */}
           <AnimatePresence>
             {showHint && (
@@ -244,10 +416,10 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               </motion.div>
             )}
           </AnimatePresence>
-          
+
           {/* Puzzle Grid */}
           <div className="bg-white/20 dark:bg-gray-900/20 backdrop-blur-sm rounded-2xl p-4 border border-white/50 dark:border-white/10 shadow-2xl">
-            <div 
+            <div
               className="grid gap-1 rounded-xl overflow-hidden"
               style={{
                 gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
@@ -262,11 +434,12 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
                   onDrop={handleDrop}
                   isCompleted={completed}
                   gridSize={gridSize}
+                  imageUrl={imageUrl}
                 />
               ))}
             </div>
           </div>
-          
+
           {/* Progress */}
           {!completed && pieces.length > 0 && (
             <div className="mt-6">
@@ -286,7 +459,7 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
               </div>
             </div>
           )}
-          
+
           {/* Completion Celebration */}
           <AnimatePresence>
             {completed && (
@@ -313,6 +486,9 @@ const PuzzleGameComponent = ({ imageUrl, onComplete }) => {
           </AnimatePresence>
         </div>
       </div>
+      
+      {/* Custom Drag Layer - shows dragged piece */}
+      <DragLayer gridSize={gridSize} imageUrl={imageUrl} />
     </DndProvider>
   );
 };
