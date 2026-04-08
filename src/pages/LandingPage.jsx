@@ -935,7 +935,7 @@ const LandingPage = () => {
               <div className="text-center sm:text-left">
                 <h4 className="text-gray-800 dark:text-white font-semibold mb-2 md:mb-3 text-sm md:text-base">Company</h4>
                 <ul className="space-y-1.5 md:space-y-2 text-gray-600 dark:text-gray-400 text-xs md:text-sm">
-                  <li><a href="#" className="hover:text-pink-500 transition-colors">About Us</a></li>
+                  <li><a href="# " className="hover:text-pink-500 transition-colors">About Us</a></li>
                   <li><a href="#" className="hover:text-pink-500 transition-colors">Love Blog</a></li>
                   <li><a href="#" className="hover:text-pink-500 transition-colors">Contact</a></li>
                   <li><a href="#" className="hover:text-pink-500 transition-colors">Careers</a></li>
