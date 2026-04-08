@@ -15,10 +15,21 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 const SurpriseViewerPage = () => {
   const { id } = useParams();
   const { getSurprise, currentSurprise, isLoading } = useSurpriseStore();
-  const [stage, setStage] = useState('countdown'); // countdown, puzzle, quiz, gift, message, timeline, video, complete
+  const [stage, setStage] = useState(''); // countdown, puzzle, quiz, gift, message, timeline, video, complete
   const [showConfetti, setShowConfetti] = useState(false);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(()=>{
+    let localStage = localStorage.getItem("Surprisestage");
+    console.log(localStage)
+    if(localStage){
+      setStage(localStage)
+      setStage("gift")
+    }else{
+      setStage("countdown")
+    }
+  },[]);
   
   useEffect(() => {
     if (id) {
@@ -35,32 +46,39 @@ const SurpriseViewerPage = () => {
   
   const handleCountdownComplete = () => {
     setStage('puzzle');
+    localStorage.setItem("Surprisestage",'puzzle');
   };
   
   const handlePuzzleComplete = () => {
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);
     setStage('quiz');
+    localStorage.setItem("Surprisestage","quiz");
   };
   
   const handleQuizComplete = () => {
     setStage('gift');
+    localStorage.setItem("Surprisestage","gift");
   };
   
   const handleGiftOpen = () => {
     setStage('message');
+    localStorage.setItem("Surprisestage","message");
   };
   
   const handleMessageComplete = () => {
     setStage('timeline');
+    localStorage.setItem("Surprisestage","timeline");
   };
   
   const handleTimelineComplete = () => {
     setStage('video');
+    localStorage.setItem("Surprisestage","video");
   };
   
   const handleVideoComplete = () => {
     setStage('complete');
+
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 5000);
   };
