@@ -11,82 +11,84 @@ import GiftBoxComponent from '../components/surprise/GiftBoxComponent';
 import TimelineComponent from '../components/surprise/TimelineComponent';
 import MessageReveal from '../components/surprise/MessageReveal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import VideoPlayerComponent from '../components/surprise/VideoPlayerComponent';
+import CompletionComponent from '../components/surprise/CompletionComponent';
 
 const SurpriseViewerPage = () => {
   const { id } = useParams();
   const { getSurprise, currentSurprise, isLoading } = useSurpriseStore();
-  const [stage, setStage] = useState(''); // countdown, puzzle, quiz, gift, message, timeline, video, complete
+  const [stage, setStage] = useState('quiz'); // countdown, puzzle, quiz, gift, message, timeline, video, complete
   const [showConfetti, setShowConfetti] = useState(false);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(()=>{
+  useEffect(() => {
     let localStage = localStorage.getItem("Surprisestage");
-    console.log(localStage)
-    if(localStage){
-      setStage(localStage)
-      setStage("gift")
-    }else{
+    // console.log(localStage)
+    if (localStage) {
+      // setStage(localStage)
+      // setStage("gift")
+    } else {
       setStage("countdown")
     }
-  },[]);
-  
+  }, []);
+
   useEffect(() => {
     if (id) {
       getSurprise(id);
     }
   }, [id, getSurprise]);
-  
+
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
     if (password === currentSurprise.password) {
       setIsAuthenticated(true);
     }
   };
-  
+
   const handleCountdownComplete = () => {
     setStage('puzzle');
-    localStorage.setItem("Surprisestage",'puzzle');
+    localStorage.setItem("Surprisestage", 'puzzle');
   };
-  
+
   const handlePuzzleComplete = () => {
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);
     setStage('quiz');
-    localStorage.setItem("Surprisestage","quiz");
+    localStorage.setItem("Surprisestage", "quiz");
   };
-  
+
   const handleQuizComplete = () => {
     setStage('gift');
-    localStorage.setItem("Surprisestage","gift");
+    localStorage.setItem("Surprisestage", "gift");
   };
-  
+
   const handleGiftOpen = () => {
     setStage('message');
-    localStorage.setItem("Surprisestage","message");
+    localStorage.setItem("Surprisestage", "message");
   };
-  
+
   const handleMessageComplete = () => {
     setStage('timeline');
-    localStorage.setItem("Surprisestage","timeline");
+    localStorage.setItem("Surprisestage", "timeline");
   };
-  
+
   const handleTimelineComplete = () => {
     setStage('video');
-    localStorage.setItem("Surprisestage","video");
+    localStorage.setItem("Surprisestage", "video");
   };
-  
+
   const handleVideoComplete = () => {
     setStage('complete');
 
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 5000);
   };
-  
+
   if (isLoading) {
     return <LoadingSpinner />;
   }
-  
+
   if (!currentSurprise) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -97,7 +99,7 @@ const SurpriseViewerPage = () => {
       </div>
     );
   }
-  
+
   if (currentSurprise.hasPassword && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -129,12 +131,12 @@ const SurpriseViewerPage = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen py-12">
       {showConfetti && <ReactConfetti />}
       <MusicPlayer src={currentSurprise.music} autoPlay />
-      
+
       <div className="container mx-auto px-4">
         <AnimatePresence mode="wait">
           {stage === 'countdown' && (
@@ -150,7 +152,7 @@ const SurpriseViewerPage = () => {
               />
             </motion.div>
           )}
-          
+
           {stage === 'puzzle' && (
             <motion.div
               key="puzzle"
@@ -164,7 +166,7 @@ const SurpriseViewerPage = () => {
               />
             </motion.div>
           )}
-          
+
           {stage === 'quiz' && currentSurprise.quiz.length > 0 && (
             <motion.div
               key="quiz"
@@ -178,7 +180,7 @@ const SurpriseViewerPage = () => {
               />
             </motion.div>
           )}
-          
+
           {stage === 'gift' && (
             <motion.div
               key="gift"
@@ -192,7 +194,7 @@ const SurpriseViewerPage = () => {
               />
             </motion.div>
           )}
-          
+
           {stage === 'message' && (
             <motion.div
               key="message"
@@ -206,7 +208,7 @@ const SurpriseViewerPage = () => {
               />
             </motion.div>
           )}
-          
+
           {stage === 'timeline' && currentSurprise.memories?.length > 0 && (
             <motion.div
               key="timeline"
@@ -222,53 +224,16 @@ const SurpriseViewerPage = () => {
               </div>
             </motion.div>
           )}
-          
+
           {stage === 'video' && currentSurprise.video && (
-            <motion.div
-              key="video"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="max-w-4xl mx-auto"
-            >
-              <video
-                src={currentSurprise.video}
-                controls
-                autoPlay
-                className="w-full rounded-xl shadow-2xl"
-                onEnded={handleVideoComplete}
-              />
-            </motion.div>
+            <VideoPlayerComponent
+              videoSrc={currentSurprise.video}
+              onComplete={handleVideoComplete}
+            />
           )}
-          
+
           {stage === 'complete' && (
-            <motion.div
-              key="complete"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center"
-            >
-              <h1 className="text-5xl font-bold text-white mb-6">
-                🎉 Congratulations! 🎉
-              </h1>
-              <p className="text-xl text-purple-300 mb-8">
-                You've completed the surprise experience!
-              </p>
-              <div className="glass-card p-8">
-                <p className="text-white text-lg">
-                  Thank you for being part of this special moment. ❤️
-                </p>
-                <p className="text-gray-300 mt-4">
-                  Share this moment with others by creating your own surprise!
-                </p>
-                <button
-                  onClick={() => window.location.href = '/'}
-                  className="neon-button mt-6"
-                >
-                  Create Your Own Surprise
-                </button>
-              </div>
-            </motion.div>
+            <CompletionComponent />
           )}
         </AnimatePresence>
       </div>

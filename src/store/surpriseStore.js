@@ -61,16 +61,29 @@ const useSurpriseStore = create((set, get) => ({
     }
   },
   
-  uploadFile: async (file, path) => {
-    try {
-      const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      return url;
-    } catch (error) {
-      throw error;
-    }
+  // In your surpriseStore.js, update the uploadFile function
+uploadFile: async (file, path) => {
+  try {
+    const storageRef = ref(storage, path);
+    
+    // Set metadata with cache control
+    const metadata = {
+      contentType: file.type,
+      customMetadata: {
+        'Cache-Control': 'public, max-age=31536000',
+        'Content-Disposition': `inline; filename="${file.name}"`,
+      },
+    };
+    
+    // Upload with metadata
+    await uploadBytes(storageRef, file, metadata);
+    const url = await getDownloadURL(storageRef);
+    return url;
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw error;
   }
+},
 }));
 
 export default useSurpriseStore;

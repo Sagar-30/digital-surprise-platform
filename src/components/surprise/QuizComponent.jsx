@@ -13,7 +13,7 @@ const QuizComponent = ({ questions, onComplete }) => {
     // Calculate score whenever answers change
     if (answers.length > 0) {
       // console.log(answers,questions[0].correct)
-      const correctCount = answers.filter((answer, idx) => answer === questions[idx]?.correct).length;
+      const correctCount = answers.filter((answer, idx) => answer === answers[questions[idx]?.correct]).length;
       // console.log("correct",correctCount)
       setScore(correctCount);
     }
@@ -33,7 +33,7 @@ const QuizComponent = ({ questions, onComplete }) => {
         setCurrentQuestion(currentQuestion + 1);
       } else {
         const allCorrect = newAnswers.every(
-          (answer, idx) => answer === questions[idx].correct
+          (answer, idx) => answer === newAnswers[questions[idx].correct]
         );
         setIsCorrect(allCorrect);
         setShowResult(true);
@@ -205,7 +205,7 @@ const QuizComponent = ({ questions, onComplete }) => {
             <div className="space-y-3 md:space-y-4">
               {question.options.map((option, idx) => {
                 const isSelected = selectedOption === option;
-                const isCorrectAnswer = option === question.correct;
+                const isCorrectAnswer = option === option[question.correct];
                 
                 return (
                   <motion.button

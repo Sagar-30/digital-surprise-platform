@@ -24,21 +24,21 @@ const CreateSurprisePage = () => {
   });
   const [uploading, setUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
-  
+
   // Generate preview URLs for images
   useEffect(() => {
     const urls = formData.images.map(file => URL.createObjectURL(file));
     setPreviewImages(urls);
     return () => urls.forEach(url => URL.revokeObjectURL(url));
   }, [formData.images]);
-  
+
   const onDrop = (acceptedFiles, type) => {
     setFormData(prev => ({
       ...prev,
       [type]: [...prev[type], ...acceptedFiles]
     }));
   };
-  
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (files) => onDrop(files, 'images'),
     accept: {
@@ -46,13 +46,13 @@ const CreateSurprisePage = () => {
     },
     maxFiles: 10
   });
-  
+
   const handleSubmit = async () => {
     if (!formData.title || !formData.unlockDate || !formData.message) {
       toast.error('Please fill in all required fields');
       return;
     }
-    
+
     setUploading(true);
     try {
       const imageUrls = [];
@@ -60,17 +60,17 @@ const CreateSurprisePage = () => {
         const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
         imageUrls.push(url);
       }
-      
+
       let musicUrl = null;
       if (formData.music) {
         musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
       }
-      
+
       let videoUrl = null;
       if (formData.video) {
         videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
       }
-      
+
       const surpriseData = {
         ...formData,
         images: imageUrls,
@@ -79,7 +79,7 @@ const CreateSurprisePage = () => {
         status: 'active',
         createdAt: new Date().toISOString()
       };
-      
+
       const id = await createSurprise(surpriseData);
       toast.success('Surprise created successfully! 🎉');
       navigate(`/surprise/${id}`);
@@ -90,27 +90,27 @@ const CreateSurprisePage = () => {
       setUploading(false);
     }
   };
-  
+
   const steps = [
     { number: 1, title: "Basic Info", icon: "💝", color: "from-pink-400 to-rose-400" },
     { number: 2, title: "Add Media", icon: "📸", color: "from-purple-400 to-indigo-400" },
     { number: 3, title: "Interactive", icon: "🎮", color: "from-blue-400 to-cyan-400" },
     { number: 4, title: "Publish", icon: "✨", color: "from-orange-400 to-amber-400" }
   ];
-  
+
   const occasions = [
     { value: 'birthday', label: 'Birthday', emoji: '🎂', color: 'from-pink-400 to-rose-400' },
     { value: 'anniversary', label: 'Anniversary', emoji: '💝', color: 'from-purple-400 to-indigo-400' },
     { value: 'graduation', label: 'Graduation', emoji: '🎓', color: 'from-blue-400 to-cyan-400' },
     { value: 'just-because', label: 'Just Because', emoji: '✨', color: 'from-orange-400 to-amber-400' }
   ];
-  
+
   return (
     <div className="min-h-screen py-8 md:py-12 px-4 relative overflow-hidden">
       {/* Animated Background */}
       <div className="fixed inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100 dark:from-pink-900 dark:via-purple-900 dark:to-blue-900" />
-        
+
         {/* Animated blobs */}
         <motion.div
           className="absolute top-20 left-10 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 dark:opacity-20"
@@ -128,7 +128,7 @@ const CreateSurprisePage = () => {
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
         />
-        
+
         {/* Floating hearts */}
         {[...Array(15)].map((_, i) => (
           <motion.div
@@ -153,7 +153,7 @@ const CreateSurprisePage = () => {
           </motion.div>
         ))}
       </div>
-      
+
       <div className="container mx-auto max-w-4xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -176,18 +176,17 @@ const CreateSurprisePage = () => {
               Let's make something magical and memorable! ✨
             </p>
           </div>
-          
+
           {/* Progress Steps - Responsive */}
           <div className="mb-8 md:mb-12">
             <div className="flex justify-between items-center">
               {steps.map((s, idx) => (
                 <div key={s.number} className="flex-1 flex flex-col items-center">
                   <motion.div
-                    className={`relative z-10 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base ${
-                      step >= s.number 
-                        ? `bg-gradient-to-r ${s.color} shadow-lg` 
-                        : 'bg-gray-300 dark:bg-gray-700'
-                    }`}
+                    className={`relative z-10 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base ${step >= s.number
+                      ? `bg-gradient-to-r ${s.color} shadow-lg`
+                      : 'bg-gray-300 dark:bg-gray-700'
+                      }`}
                     whileHover={{ scale: 1.1 }}
                   >
                     {step > s.number ? '✓' : s.icon}
@@ -198,8 +197,8 @@ const CreateSurprisePage = () => {
                     </p>
                   </div>
                   {idx < steps.length - 1 && (
-                    <div className="hidden md:block absolute w-1/3 h-0.5 bg-gray-300 dark:bg-gray-700" 
-                         style={{ left: `${(idx + 1) * 25}%`, top: '20px' }} />
+                    <div className="hidden md:block absolute w-1/3 h-0.5 bg-gray-300 dark:bg-gray-700"
+                      style={{ left: `${(idx + 1) * 25}%`, top: '20px' }} />
                   )}
                 </div>
               ))}
@@ -211,7 +210,7 @@ const CreateSurprisePage = () => {
               </p>
             </div>
           </div>
-          
+
           {/* Form Steps */}
           <AnimatePresence mode="wait">
             <motion.div
@@ -227,7 +226,7 @@ const CreateSurprisePage = () => {
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
                     <span>💝</span> Basic Information
                   </h2>
-                  
+
                   <div className="space-y-5">
                     <div>
                       <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
@@ -236,12 +235,12 @@ const CreateSurprisePage = () => {
                       <input
                         type="text"
                         value={formData.title}
-                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white placeholder-gray-500"
                         placeholder="e.g., Happy Birthday My Love!"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
                         Occasion
@@ -251,12 +250,11 @@ const CreateSurprisePage = () => {
                           <motion.button
                             key={occ.value}
                             type="button"
-                            onClick={() => setFormData({...formData, occasion: occ.value})}
-                            className={`px-4 py-2 rounded-xl transition-all ${
-                              formData.occasion === occ.value
-                                ? `bg-gradient-to-r ${occ.color} text-white shadow-lg`
-                                : 'bg-white/50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 border border-pink-300 dark:border-pink-500/30'
-                            }`}
+                            onClick={() => setFormData({ ...formData, occasion: occ.value })}
+                            className={`px-4 py-2 rounded-xl transition-all ${formData.occasion === occ.value
+                              ? `bg-gradient-to-r ${occ.color} text-white shadow-lg`
+                              : 'bg-white/50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 border border-pink-300 dark:border-pink-500/30'
+                              }`}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                           >
@@ -266,7 +264,7 @@ const CreateSurprisePage = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
                         Unlock Date & Time <span className="text-pink-500">*</span>
@@ -274,37 +272,37 @@ const CreateSurprisePage = () => {
                       <input
                         type="datetime-local"
                         value={formData.unlockDate}
-                        onChange={(e) => setFormData({...formData, unlockDate: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, unlockDate: e.target.value })}
                         className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
                         Secret Message <span className="text-pink-500">*</span>
                       </label>
                       <textarea
                         value={formData.message}
-                        onChange={(e) => setFormData({...formData, message: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white placeholder-gray-500"
                         rows="4"
                         placeholder="Write a heartfelt message that will appear in the surprise..."
                       />
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
                         id="hasPassword"
                         checked={formData.hasPassword}
-                        onChange={(e) => setFormData({...formData, hasPassword: e.target.checked})}
+                        onChange={(e) => setFormData({ ...formData, hasPassword: e.target.checked })}
                         className="w-5 h-5 rounded border-pink-300 text-pink-500 focus:ring-pink-500"
                       />
                       <label htmlFor="hasPassword" className="text-gray-700 dark:text-gray-300 font-semibold">
                         Add password protection 🔒
                       </label>
                     </div>
-                    
+
                     {formData.hasPassword && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
@@ -317,7 +315,7 @@ const CreateSurprisePage = () => {
                         <input
                           type="password"
                           value={formData.password}
-                          onChange={(e) => setFormData({...formData, password: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                           className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white"
                           placeholder="Set a secret password"
                         />
@@ -326,13 +324,13 @@ const CreateSurprisePage = () => {
                   </div>
                 </div>
               )}
-              
+
               {step === 2 && (
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
                     <span>📸</span> Add Media
                   </h2>
-                  
+
                   <div className="space-y-6">
                     <div>
                       <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
@@ -340,11 +338,10 @@ const CreateSurprisePage = () => {
                       </label>
                       <div
                         {...getRootProps()}
-                        className={`border-2 border-dashed rounded-xl p-6 md:p-8 text-center cursor-pointer transition-all ${
-                          isDragActive
-                            ? 'border-pink-500 bg-pink-50/50 dark:bg-pink-900/20'
-                            : 'border-pink-300 dark:border-pink-500/30 hover:border-pink-500'
-                        }`}
+                        className={`border-2 border-dashed rounded-xl p-6 md:p-8 text-center cursor-pointer transition-all ${isDragActive
+                          ? 'border-pink-500 bg-pink-50/50 dark:bg-pink-900/20'
+                          : 'border-pink-300 dark:border-pink-500/30 hover:border-pink-500'
+                          }`}
                       >
                         <input {...getInputProps()} />
                         <div className="text-4xl mb-2">📷</div>
@@ -355,7 +352,7 @@ const CreateSurprisePage = () => {
                           Supports: JPG, PNG, GIF (Max 10 images)
                         </p>
                       </div>
-                      
+
                       {previewImages.length > 0 && (
                         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                           {previewImages.map((url, idx) => (
@@ -384,7 +381,7 @@ const CreateSurprisePage = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
                         Background Music 🎵
@@ -393,7 +390,7 @@ const CreateSurprisePage = () => {
                         <input
                           type="file"
                           accept="audio/*"
-                          onChange={(e) => setFormData({...formData, music: e.target.files[0]})}
+                          onChange={(e) => setFormData({ ...formData, music: e.target.files[0] })}
                           className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
                         />
                         {formData.music && (
@@ -403,7 +400,7 @@ const CreateSurprisePage = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
                         Video Message 🎬
@@ -412,7 +409,7 @@ const CreateSurprisePage = () => {
                         <input
                           type="file"
                           accept="video/*"
-                          onChange={(e) => setFormData({...formData, video: e.target.files[0]})}
+                          onChange={(e) => setFormData({ ...formData, video: e.target.files[0] })}
                           className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
                         />
                         {formData.video && (
@@ -425,18 +422,19 @@ const CreateSurprisePage = () => {
                   </div>
                 </div>
               )}
-              
+
               {step === 3 && (
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
                     <span>🎮</span> Interactive Elements
                   </h2>
-                  
-                  <div className="space-y-6">
+
+                  <div className="space-y-8">
+                    {/* Quiz Section */}
                     <div>
                       <div className="flex justify-between items-center mb-4">
                         <label className="text-gray-700 dark:text-gray-300 font-semibold">
-                          Quiz Questions
+                          Quiz Questions 📝
                         </label>
                         <motion.button
                           onClick={() => setFormData(prev => ({
@@ -450,7 +448,7 @@ const CreateSurprisePage = () => {
                           + Add Question
                         </motion.button>
                       </div>
-                      
+
                       <div className="space-y-4">
                         {formData.quiz.map((q, idx) => (
                           <motion.div
@@ -460,12 +458,12 @@ const CreateSurprisePage = () => {
                             className="bg-white/30 dark:bg-gray-900/30 rounded-xl p-4 border border-pink-200 dark:border-pink-500/20"
                           >
                             <div className="flex justify-between items-start mb-3">
-                              <h3 className="text-white font-semibold">Question {idx + 1}</h3>
+                              <h3 className="text-gray-800 dark:text-white font-semibold">Question {idx + 1}</h3>
                               <button
                                 onClick={() => {
                                   const newQuiz = [...formData.quiz];
                                   newQuiz.splice(idx, 1);
-                                  setFormData({...formData, quiz: newQuiz});
+                                  setFormData({ ...formData, quiz: newQuiz });
                                 }}
                                 className="text-red-500 hover:text-red-600"
                               >
@@ -479,7 +477,7 @@ const CreateSurprisePage = () => {
                               onChange={(e) => {
                                 const newQuiz = [...formData.quiz];
                                 newQuiz[idx].text = e.target.value;
-                                setFormData({...formData, quiz: newQuiz});
+                                setFormData({ ...formData, quiz: newQuiz });
                               }}
                               className="w-full px-4 py-2 mb-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white"
                             />
@@ -492,7 +490,7 @@ const CreateSurprisePage = () => {
                                 onChange={(e) => {
                                   const newQuiz = [...formData.quiz];
                                   newQuiz[idx].options[optIdx] = e.target.value;
-                                  setFormData({...formData, quiz: newQuiz});
+                                  setFormData({ ...formData, quiz: newQuiz });
                                 }}
                                 className="w-full px-4 py-2 mb-2 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white"
                               />
@@ -502,7 +500,7 @@ const CreateSurprisePage = () => {
                               onChange={(e) => {
                                 const newQuiz = [...formData.quiz];
                                 newQuiz[idx].correct = parseInt(e.target.value);
-                                setFormData({...formData, quiz: newQuiz});
+                                setFormData({ ...formData, quiz: newQuiz });
                               }}
                               className="w-full px-4 py-2 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white"
                             >
@@ -515,25 +513,179 @@ const CreateSurprisePage = () => {
                           </motion.div>
                         ))}
                       </div>
-                      
+
                       {formData.quiz.length === 0 && (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
                           <div className="text-4xl mb-2">📝</div>
                           <p>No quiz questions added yet</p>
                           <p className="text-sm">Click "Add Question" to create a fun quiz!</p>
                         </div>
                       )}
                     </div>
+
+                    {/* NEW: Memories/Timeline Section */}
+                    <div className="border-t border-pink-200 dark:border-pink-500/20 pt-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <label className="text-gray-700 dark:text-gray-300 font-semibold">
+                          Our Story Memories 📖
+                        </label>
+                        <motion.button
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            memories: [...prev.memories, {
+                              title: '',
+                              caption: '',
+                              date: '',
+                              image: null,
+                              imagePreview: null
+                            }]
+                          }))}
+                          className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg text-sm font-semibold shadow-lg"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          + Add Memory
+                        </motion.button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {formData.memories.map((memory, idx) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white/30 dark:bg-gray-900/30 rounded-xl p-4 border border-pink-200 dark:border-pink-500/20"
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <h3 className="text-gray-800 dark:text-white font-semibold">Memory {idx + 1}</h3>
+                              <button
+                                onClick={() => {
+                                  const newMemories = [...formData.memories];
+                                  newMemories.splice(idx, 1);
+                                  setFormData({ ...formData, memories: newMemories });
+                                }}
+                                className="text-red-500 hover:text-red-600"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+
+                            {/* Memory Title */}
+                            <input
+                              type="text"
+                              placeholder="Title (e.g., Our First Date)"
+                              value={memory.title}
+                              onChange={(e) => {
+                                const newMemories = [...formData.memories];
+                                newMemories[idx].title = e.target.value;
+                                setFormData({ ...formData, memories: newMemories });
+                              }}
+                              className="w-full px-4 py-2 mb-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white placeholder-gray-500 text-sm"
+                              // placeholder="Enter a title..."
+                            />
+
+                            {/* Memory Description */}
+                            <textarea
+                              placeholder="Write about this beautiful memory..."
+                              value={memory.caption}
+                              onChange={(e) => {
+                                const newMemories = [...formData.memories];
+                                newMemories[idx].caption = e.target.value;
+                                setFormData({ ...formData, memories: newMemories });
+                              }}
+                              rows="3"
+                              className="w-full px-4 py-2 mb-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white placeholder-gray-500 text-sm"
+                              // placeholder="Share your special memory..."
+                            />
+
+                            {/* Memory Date */}
+                            <input
+                              type="date"
+                              value={memory.date}
+                              onChange={(e) => {
+                                const newMemories = [...formData.memories];
+                                newMemories[idx].date = e.target.value;
+                                setFormData({ ...formData, memories: newMemories });
+                              }}
+                              className="w-full px-4 py-2 mb-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white text-sm"
+                            />
+
+                            {/* Memory Image Upload */}
+                            <div className="mt-2">
+                              <label className="block text-gray-600 dark:text-gray-400 text-sm mb-2">
+                                Memory Image (optional)
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if (file) {
+                                    const newMemories = [...formData.memories];
+                                    newMemories[idx].image = file;
+                                    newMemories[idx].imagePreview = URL.createObjectURL(file);
+                                    setFormData({ ...formData, memories: newMemories });
+                                  }
+                                }}
+                                className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
+                              />
+
+                              {/* Image Preview */}
+                              {memory.imagePreview && (
+                                <div className="mt-2 relative inline-block">
+                                  <img
+                                    src={memory.imagePreview}
+                                    alt="Preview"
+                                    className="w-20 h-20 object-cover rounded-lg"
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      const newMemories = [...formData.memories];
+                                      newMemories[idx].image = null;
+                                      newMemories[idx].imagePreview = null;
+                                      setFormData({ ...formData, memories: newMemories });
+                                    }}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {formData.memories.length === 0 && (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          <div className="text-4xl mb-2">📖</div>
+                          <p>No memories added yet</p>
+                          <p className="text-sm">Click "Add Memory" to start your beautiful story timeline!</p>
+                        </div>
+                      )}
+
+                      {/* Preview of timeline */}
+                      {formData.memories.length > 0 && (
+                        <div className="mt-4 p-4 bg-pink-50/50 dark:bg-pink-900/20 rounded-lg">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                            <span>✨</span>
+                            You have {formData.memories.length} beautiful memory
+                            {formData.memories.length !== 1 ? 'ies' : ''} that will appear in your story timeline
+                            <span>✨</span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
-              
+
               {step === 4 && (
                 <div>
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
                     <span>✨</span> Preview & Publish
                   </h2>
-                  
+
                   <div className="space-y-6">
                     <div className="bg-white/30 dark:bg-gray-900/30 rounded-xl p-6">
                       <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
@@ -570,19 +722,23 @@ const CreateSurprisePage = () => {
                           <span className="text-gray-600 dark:text-gray-400">Quiz Questions:</span>
                           <span className="text-gray-800 dark:text-white font-semibold">{formData.quiz.length} questions</span>
                         </div>
+                        <div className="flex flex-wrap justify-between py-2 border-b border-pink-200 dark:border-pink-500/20">
+                          <span className="text-gray-600 dark:text-gray-400">Memories:</span>
+                          <span className="text-gray-800 dark:text-white font-semibold">{formData.memories.length} memories</span>
+                        </div>
                         <div className="flex flex-wrap justify-between py-2">
                           <span className="text-gray-600 dark:text-gray-400">Password Protected:</span>
                           <span className="text-gray-800 dark:text-white font-semibold">{formData.hasPassword ? '✓ Yes' : 'No'}</span>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl p-6 text-white text-center">
                       <div className="text-3xl mb-2">🎉</div>
                       <p className="text-lg font-semibold mb-2">Ready to Share the Love?</p>
                       <p className="text-sm opacity-90">Your surprise will be available at the scheduled time</p>
                     </div>
-                    
+
                     <motion.button
                       onClick={handleSubmit}
                       disabled={uploading}
@@ -607,7 +763,7 @@ const CreateSurprisePage = () => {
               )}
             </motion.div>
           </AnimatePresence>
-          
+
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-6 md:mt-8 gap-4">
             {step > 1 && (

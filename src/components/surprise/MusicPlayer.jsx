@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Howl } from 'howler';
 
 const MusicPlayer = ({ src, autoPlay = false }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const soundRef = useRef(null);
   
