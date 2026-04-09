@@ -83,31 +83,31 @@ const LandingPage = () => {
   }, [userMenuOpen]);
 
   const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "Made for 5th Anniversary",
-      text: "The most beautiful digital experience ever! My husband was in tears. Worth every penny!",
-      rating: 5,
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop",
-      color: "from-pink-400 to-rose-400"
-    },
-    {
-      name: "Michael Chen",
-      role: "Birthday Surprise",
-      text: "The puzzle game and countdown made it so exciting. She said it was the best gift ever!",
-      rating: 5,
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop",
-      color: "from-purple-400 to-pink-400"
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Long Distance Love",
-      text: "Being miles apart, this brought us closer. The video message feature is incredible.",
-      rating: 5,
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop",
-      color: "from-amber-400 to-orange-400"
-    }
-  ];
+  {
+    name: "Aarav Sharma",
+    role: "Made for 5th Anniversary",
+    text: "The most beautiful digital experience ever! My wife was in tears. Worth every penny!",
+    rating: 5,
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=boy1",
+    color: "from-pink-400 to-rose-400"
+  },
+  {
+    name: "Ananya Verma",
+    role: "Birthday Surprise",
+    text: "The puzzle game and countdown made it so exciting. He said it was the best gift ever!",
+    rating: 5,
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=girl1",
+    color: "from-purple-400 to-pink-400"
+  },
+  {
+    name: "Rohan Mehta",
+    role: "Long Distance Love",
+    text: "Being miles apart, this brought us closer. The video message feature is incredible.",
+    rating: 5,
+    image: "https://api.dicebear.com/7.x/avataaars/svg?seed=boy2",
+    color: "from-amber-400 to-orange-400"
+  }
+];
 
   const pricingPlans = [
     {
@@ -916,7 +916,7 @@ const LandingPage = () => {
         </section>
 
         {/* Pricing Section - Responsive */}
-        <section id="pricing" className="py-12 md:py-20 px-4">
+        {/* <section id="pricing" className="py-12 md:py-20 px-4">
           <div className="container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
@@ -994,7 +994,7 @@ const LandingPage = () => {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Love Stories Section - Responsive */}
         <section id="love-stories" className="py-12 md:py-20 px-4">
