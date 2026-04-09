@@ -499,10 +499,10 @@ const LoginPage = () => {
                 <span className="text-pink-400 text-base md:text-lg">🔒</span>
                 <span>Private & secure</span>
               </div>
-              <div className="flex items-center gap-1 md:gap-2 text-gray-600 dark:text-gray-300">
+              {/* <div className="flex items-center gap-1 md:gap-2 text-gray-600 dark:text-gray-300">
                 <span className="text-pink-400 text-base md:text-lg">🚀</span>
                 <span>Free to use</span>
-              </div>
+              </div> */}
             </div>
           </motion.div>
 
