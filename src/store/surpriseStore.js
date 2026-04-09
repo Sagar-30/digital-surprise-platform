@@ -9,38 +9,45 @@ const useSurpriseStore = create((set, get) => ({
   error: null,
   
   createSurprise: async (data) => {
-    set({ isLoading: true, error: null });
-    try {
-      const currentUser = auth.currentUser;
-      
-      // Check if user is logged in
-      if (!currentUser) {
-        throw new Error('You must be logged in to create a surprise');
-      }
-      
-      const id = Date.now().toString();
-      const surpriseData = {
-        ...data,
-        id,
-        userId: currentUser.uid, // Make sure this is stored
-        userEmail: currentUser.email, // Also store email for reference
-        userName: currentUser.displayName || currentUser.email, // Store user name
-        createdAt: new Date().toISOString(),
-        status: 'active',
-        views: 0
-      };
-      
-      console.log('Creating surprise with data:', surpriseData); // Debug log
-      
-      await setDoc(doc(db, 'surprises', id), surpriseData);
-      set({ currentSurprise: surpriseData, isLoading: false });
-      return id;
-    } catch (error) {
-      console.error('Create surprise error:', error);
-      set({ error: error.message, isLoading: false });
-      throw error;
+  set({ isLoading: true, error: null });
+  try {
+    const currentUser = auth.currentUser;
+    
+    // Check if user is logged in
+    if (!currentUser) {
+      throw new Error('You must be logged in to create a surprise');
     }
-  },
+    
+    const id = Date.now().toString();
+    
+    // Create a clean object without undefined values
+    const surpriseData = {
+      id,
+      userId: currentUser.uid,
+      userEmail: currentUser.email,
+      userName: currentUser.displayName || currentUser.email,
+      createdAt: new Date().toISOString(),
+      ...data // Spread the cleaned data
+    };
+    
+    // Remove any undefined values again (safety check)
+    Object.keys(surpriseData).forEach(key => {
+      if (surpriseData[key] === undefined) {
+        delete surpriseData[key];
+      }
+    });
+    
+    console.log('Final surprise data being saved:', surpriseData);
+    
+    await setDoc(doc(db, 'surprises', id), surpriseData);
+    set({ currentSurprise: surpriseData, isLoading: false });
+    return id;
+  } catch (error) {
+    console.error('Create surprise error:', error);
+    set({ error: error.message, isLoading: false });
+    throw error;
+  }
+},
   
   getSurprise: async (id) => {
     set({ isLoading: true, error: null });

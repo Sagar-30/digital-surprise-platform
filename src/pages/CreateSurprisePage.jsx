@@ -92,7 +92,7 @@ const CreateSurprisePage = () => {
           });
         });
       }
-      
+
       // Memory validation - at least one complete memory if any added
       if (formData.memories.length > 0) {
         formData.memories.forEach((memory, idx) => {
@@ -129,27 +129,91 @@ const CreateSurprisePage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // const handleSubmit = async () => {
+  //   // Final validation before submit
+  //   if (!validateStep(1) || !validateStep(2) || !validateStep(3)) {
+  //     toast.error('Please fill in all required fields');
+  //     setStep(1);
+  //     return;
+  //   }
+
+  //   setUploading(true);
+  //   try {
+  //     const imageUrls = [];
+  //     for (const image of formData.images) {
+  //       const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
+  //       imageUrls.push(url);
+  //     }
+
+  //     let musicUrl = null;
+  //     if (formData.music) {
+  //       musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
+  //     }
+
+  //     let videoUrl = null;
+  //     if (formData.video) {
+  //       videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
+  //     }
+
+  //     // Process memories images
+  //     const processedMemories = await Promise.all(formData.memories.map(async (memory) => {
+  //       let imageUrl = null;
+  //       if (memory.image) {
+  //         imageUrl = await uploadFile(memory.image, `memories/${Date.now()}_${memory.image.name}`);
+  //       }
+  //       return {
+  //         ...memory,
+  //         image: imageUrl,
+  //         imagePreview: undefined // Remove preview URL
+  //       };
+  //     }));
+
+  //     const surpriseData = {
+  //       ...formData,
+  //       images: imageUrls,
+  //       music: musicUrl,
+  //       video: videoUrl,
+  //       memories: processedMemories,
+  //       status: 'active',
+  //       createdAt: new Date().toISOString()
+  //     };
+
+  //     const id = await createSurprise(surpriseData);
+  //     toast.success('Surprise created successfully! 🎉');
+
+  //     // Navigate to share page instead of surprise page
+  //     navigate(`/share?id=${id}`);
+  //   } catch (error) {
+  //     toast.error('Failed to create surprise');
+  //     console.error(error);
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
+
+
   const handleSubmit = async () => {
-    // Final validation before submit
-    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) {
+    if (!formData.title || !formData.unlockDate || !formData.message) {
       toast.error('Please fill in all required fields');
-      setStep(1);
       return;
     }
 
     setUploading(true);
     try {
+      // Upload images
       const imageUrls = [];
       for (const image of formData.images) {
         const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
         imageUrls.push(url);
       }
 
+      // Upload music
       let musicUrl = null;
       if (formData.music) {
         musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
       }
 
+      // Upload video
       let videoUrl = null;
       if (formData.video) {
         videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
@@ -162,30 +226,58 @@ const CreateSurprisePage = () => {
           imageUrl = await uploadFile(memory.image, `memories/${Date.now()}_${memory.image.name}`);
         }
         return {
-          ...memory,
+          title: memory.title || '',
+          caption: memory.caption || '',
+          date: memory.date || '',
           image: imageUrl,
-          imagePreview: undefined // Remove preview URL
         };
       }));
 
+      // Process quiz questions - remove empty ones
+      const processedQuiz = formData.quiz
+        .filter(q => q.text && q.text.trim() !== '') // Remove empty questions
+        .map(q => ({
+          text: q.text,
+          options: q.options.map(opt => opt || ''), // Ensure options are strings
+          correct: q.correct || 0
+        }));
+
+      // IMPORTANT: Clean the data - remove undefined values
       const surpriseData = {
-        ...formData,
-        images: imageUrls,
-        music: musicUrl,
-        video: videoUrl,
+        title: formData.title || '',
+        occasion: formData.occasion || 'birthday',
+        unlockDate: formData.unlockDate || '',
+        message: formData.message || '',
+        images: imageUrls || [],
+        music: musicUrl || null,
+        video: videoUrl || null,
+        quiz: processedQuiz,
         memories: processedMemories,
-        status: 'active',
-        createdAt: new Date().toISOString()
+        hasPassword: formData.hasPassword || false,
+        views: 0,
+        status: 'active'
       };
+
+      // Only add password field if hasPassword is true AND password is not empty
+      if (formData.hasPassword && formData.password && formData.password.trim() !== '') {
+        surpriseData.password = formData.password;
+      }
+
+      // Remove any undefined or null values from the object
+      Object.keys(surpriseData).forEach(key => {
+        if (surpriseData[key] === undefined) {
+          delete surpriseData[key];
+        }
+      });
+
+      console.log('Cleaned surprise data:', surpriseData); // Debug log
 
       const id = await createSurprise(surpriseData);
       toast.success('Surprise created successfully! 🎉');
-      
-      // Navigate to share page instead of surprise page
       navigate(`/share?id=${id}`);
     } catch (error) {
-      toast.error('Failed to create surprise');
-      console.error(error);
+      console.error('Submit error:', error);
+      toast.error('Failed to create surprise: ' + error.message);
     } finally {
       setUploading(false);
     }
@@ -426,7 +518,7 @@ const CreateSurprisePage = () => {
                         </p>
                       </div>
                       {errors.images && <p className="text-red-500 text-xs mt-1">{errors.images}</p>}
-                      
+
                       {previewImages.length > 0 && (
                         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                           {previewImages.map((url, idx) => (
