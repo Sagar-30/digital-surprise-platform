@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { db, storage } from '../firebase/config';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { db, storage, auth } from '../firebase/config';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const useSurpriseStore = create((set, get) => ({
@@ -11,19 +11,32 @@ const useSurpriseStore = create((set, get) => ({
   createSurprise: async (data) => {
     set({ isLoading: true, error: null });
     try {
+      const currentUser = auth.currentUser;
+      
+      // Check if user is logged in
+      if (!currentUser) {
+        throw new Error('You must be logged in to create a surprise');
+      }
+      
       const id = Date.now().toString();
       const surpriseData = {
         ...data,
         id,
-        createdAt: new Date(),
-        status: 'draft',
+        userId: currentUser.uid, // Make sure this is stored
+        userEmail: currentUser.email, // Also store email for reference
+        userName: currentUser.displayName || currentUser.email, // Store user name
+        createdAt: new Date().toISOString(),
+        status: 'active',
         views: 0
       };
+      
+      console.log('Creating surprise with data:', surpriseData); // Debug log
       
       await setDoc(doc(db, 'surprises', id), surpriseData);
       set({ currentSurprise: surpriseData, isLoading: false });
       return id;
     } catch (error) {
+      console.error('Create surprise error:', error);
       set({ error: error.message, isLoading: false });
       throw error;
     }
@@ -37,12 +50,14 @@ const useSurpriseStore = create((set, get) => ({
       
       if (docSnap.exists()) {
         const data = { id: docSnap.id, ...docSnap.data() };
+        console.log('Retrieved surprise:', data); // Debug log
         set({ currentSurprise: data, isLoading: false });
         return data;
       } else {
         throw new Error('Surprise not found');
       }
     } catch (error) {
+      console.error('Get surprise error:', error);
       set({ error: error.message, isLoading: false });
       throw error;
     }
@@ -56,34 +71,94 @@ const useSurpriseStore = create((set, get) => ({
       const updated = { ...get().currentSurprise, ...updates };
       set({ currentSurprise: updated, isLoading: false });
     } catch (error) {
+      console.error('Update surprise error:', error);
       set({ error: error.message, isLoading: false });
       throw error;
     }
   },
   
-  // In your surpriseStore.js, update the uploadFile function
-uploadFile: async (file, path) => {
-  try {
-    const storageRef = ref(storage, path);
-    
-    // Set metadata with cache control
-    const metadata = {
-      contentType: file.type,
-      customMetadata: {
-        'Cache-Control': 'public, max-age=31536000',
-        'Content-Disposition': `inline; filename="${file.name}"`,
-      },
-    };
-    
-    // Upload with metadata
-    await uploadBytes(storageRef, file, metadata);
-    const url = await getDownloadURL(storageRef);
-    return url;
-  } catch (error) {
-    console.error('Upload error:', error);
-    throw error;
+  uploadFile: async (file, path) => {
+    try {
+      const storageRef = ref(storage, path);
+      const metadata = {
+        contentType: file.type,
+        customMetadata: {
+          'Cache-Control': 'public, max-age=31536000',
+        },
+      };
+      await uploadBytes(storageRef, file, metadata);
+      const url = await getDownloadURL(storageRef);
+      return url;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  },
+  
+  getUserSurprises: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const currentUser = auth.currentUser;
+      console.log('Current user:', currentUser); // Debug log
+      
+      if (!currentUser) {
+        console.log('No user logged in');
+        set({ isLoading: false });
+        return [];
+      }
+      
+      const surprisesRef = collection(db, 'surprises');
+      const q = query(
+        surprisesRef, 
+        where('userId', '==', currentUser.uid)
+      );
+      
+      console.log('Querying for userId:', currentUser.uid); // Debug log
+      
+      const querySnapshot = await getDocs(q);
+      
+      const surprises = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log('Found surprise:', data); // Debug log
+        surprises.push({ 
+          id: doc.id, 
+          ...data,
+          createdAt: data.createdAt ? new Date(data.createdAt) : new Date()
+        });
+      });
+      
+      console.log('Total surprises found:', surprises.length); // Debug log
+      
+      // Sort by createdAt (newest first)
+      surprises.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+        return dateB - dateA;
+      });
+      
+      set({ isLoading: false });
+      return surprises;
+    } catch (error) {
+      console.error('Error fetching user surprises:', error);
+      set({ error: error.message, isLoading: false });
+      return [];
+    }
+  },
+  
+  deleteSurprise: async (id) => {
+    set({ isLoading: true });
+    try {
+      const docRef = doc(db, 'surprises', id);
+      await deleteDoc(docRef);
+      set({ isLoading: false });
+      return true;
+    } catch (error) {
+      console.error('Delete surprise error:', error);
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
   }
-},
 }));
 
 export default useSurpriseStore;

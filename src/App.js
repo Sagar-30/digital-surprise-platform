@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage';
 import CreateSurprisePage from './pages/CreateSurprisePage';
 import SurpriseViewerPage from './pages/SurpriseViewerPage';
 import LoginPage from './pages/LoginPage';
+import SharePage from './pages/SharePage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/create" element={<CreateSurprisePage />} />
+        <Route path="/share" element={<SharePage />} />
         <Route path="/surprise/:id" element={<SurpriseViewerPage />} />
       </Routes>
     </AuthProvider>

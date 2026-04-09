@@ -205,7 +205,8 @@ const QuizComponent = ({ questions, onComplete }) => {
             <div className="space-y-3 md:space-y-4">
               {question.options.map((option, idx) => {
                 const isSelected = selectedOption === option;
-                const isCorrectAnswer = option === option[question.correct];
+                // const isCorrectAnswer = option === option[question.correct];
+                const isCorrectAnswer = idx === question.correct;
                 
                 return (
                   <motion.button
