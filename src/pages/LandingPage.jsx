@@ -67,13 +67,13 @@ const LandingPage = () => {
         setMousePosition({ x: e.clientX, y: e.clientY });
       });
     };
-    
+
     const handleScroll = () => {
       requestAnimationFrame(() => {
         setScrolled(window.scrollY > 50);
       });
     };
-    
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('scroll', handleScroll);
 
@@ -207,11 +207,10 @@ const LandingPage = () => {
 
       {/* Navbar - Responsive */}
       <motion.nav
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-          scrolled
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${scrolled
             ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-lg mx-2 md:mx-4 mt-2 rounded-xl md:rounded-2xl'
             : 'bg-transparent mt-2 md:mt-6'
-        }`}
+          }`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -318,11 +317,10 @@ const LandingPage = () => {
                                   <p className="text-sm font-medium text-gray-800 dark:text-white truncate flex-1">
                                     {surprise.title}
                                   </p>
-                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                    surprise.status === 'active'
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${surprise.status === 'active'
                                       ? 'bg-green-100 text-green-600'
                                       : 'bg-gray-100 text-gray-500'
-                                  }`}>
+                                    }`}>
                                     {surprise.status || 'active'}
                                   </span>
                                 </div>
@@ -447,6 +445,7 @@ const LandingPage = () => {
                         <div className="text-lg font-bold text-gray-800 dark:text-white">{userSurprises.length}</div>
                         <div className="text-xs text-gray-500">Surprises</div>
                       </div>
+
                       <button
                         onClick={() => {
                           navigate('/create');
@@ -460,6 +459,53 @@ const LandingPage = () => {
                   </div>
                 )}
 
+                {user && (
+                  <div className="mt-3 max-h-48 overflow-y-auto border-t border-pink-200 dark:border-pink-900/30 pt-2">
+                    {/* <p className="text-xs font-semibold text-gray-500 mb-2">MY SURPRISES</p> */}
+                    <p className="text-xs font-bold text-gray-500 mb-2 text-center">MY SURPRISES</p>
+
+                    {loadingSurprises ? (
+                      <div className="text-center py-2">
+                        <div className="w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                      </div>
+                    ) : userSurprises.length > 0 ? (
+                      userSurprises.slice(0, 5).map((surprise) => (
+                        <div
+                          key={surprise.id}
+                          className="py-2 border-b border-pink-100 dark:border-pink-900/30"
+                        >
+                          <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                            {surprise.title}
+                          </p>
+
+                          <div className="flex justify-between items-center mt-1">
+                            <span className="text-xs text-gray-500">
+                              {surprise.unlockDate
+                                ? new Date(surprise.unlockDate).toLocaleDateString()
+                                : 'No date'}
+                            </span>
+
+                            <button
+                              onClick={() => {
+                                navigate(`/surprise/${surprise.id}`);
+                                setMobileMenuOpen(false);
+                              }}
+                              className="text-xs text-pink-500 font-semibold mr-3"
+                            >
+                              View
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-gray-400 text-center py-2">
+                        No surprises yet
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <hr/>
                 {['Features', 'How It Works', 'Love Stories', 'Pricing'].map((item) => (
                   <a
                     key={item}
@@ -852,11 +898,10 @@ const LandingPage = () => {
                   <button
                     key={idx}
                     onClick={() => setActiveTestimonial(idx)}
-                    className={`transition-all duration-200 ${
-                      idx === activeTestimonial
+                    className={`transition-all duration-200 ${idx === activeTestimonial
                         ? 'w-6 md:w-8 h-1.5 md:h-2 bg-pink-500 rounded-full'
                         : 'w-1.5 md:w-2 h-1.5 md:h-2 bg-pink-300 dark:bg-pink-700 rounded-full'
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -876,7 +921,7 @@ const LandingPage = () => {
             >
               <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 opacity-90" />
               <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http://www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.1%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20" />
-              
+
               <div className="relative z-10">
                 <div className="text-5xl md:text-7xl mb-3 md:mb-4">🎀</div>
                 <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-3 md:mb-4">
