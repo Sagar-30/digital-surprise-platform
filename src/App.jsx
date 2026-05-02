@@ -1,11 +1,11 @@
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './hooks/useAuth';
-import LandingPage from './pages/LandingPage';
-import CreateSurprisePage from './pages/CreateSurprisePage';
-import SurpriseViewerPage from './pages/SurpriseViewerPage';
-import LoginPage from './pages/LoginPage';
-import SharePage from './pages/SharePage';
+import { AuthProvider } from './hooks/useAuth.jsx';
+import LandingPage from './pages/LandingPage.jsx';
+import CreateSurprisePage from './pages/CreateSurprisePage.jsx';
+import SurpriseViewerPage from './pages/SurpriseViewerPage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import SharePage from './pages/SharePage.jsx';
 
 function App() {
   return (

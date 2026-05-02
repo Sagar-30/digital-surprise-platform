@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth.jsx';
 import toast from 'react-hot-toast';
 
 const LoginPage = () => {
@@ -16,7 +16,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   const navigate = useNavigate();
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, sendPasswordReset } = useAuth();
 
@@ -29,21 +29,22 @@ const LoginPage = () => {
     }
   }, []);
 
+
   const handleEmailAuth = async (e) => {
     e.preventDefault();
-    
+
     if (!resetMode && !isLogin && password !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
-    
+
     if (!resetMode && !isLogin && !agreeTerms) {
       toast.error('Please agree to the terms and conditions');
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       if (resetMode) {
         await sendPasswordReset(resetEmail);
@@ -61,6 +62,7 @@ const LoginPage = () => {
         navigate('/');
       } else {
         await signUpWithEmail(email, password, name);
+        console.log("log after error");
         toast.success('Account created successfully! 🎉');
         navigate('/');
       }
@@ -111,7 +113,7 @@ const LoginPage = () => {
       <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100 dark:from-pink-900 dark:via-purple-900 dark:to-blue-900" />
-        
+
         {/* Floating Hearts */}
         <div className="absolute inset-0 overflow-hidden">
           {floatingHearts.map((heart, i) => (
@@ -203,7 +205,7 @@ const LoginPage = () => {
       {/* Animated Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100 dark:from-pink-900 dark:via-purple-900 dark:to-blue-900" />
-        
+
         {/* Animated blobs */}
         <div className="hidden md:block">
           <motion.div
@@ -263,7 +265,7 @@ const LoginPage = () => {
           {/* Header */}
           <div className="text-center mb-6 md:mb-8">
             <motion.div
-              animate={{ 
+              animate={{
                 scale: [1, 1.1, 1],
                 rotate: [0, 5, -5, 0]
               }}
@@ -272,23 +274,23 @@ const LoginPage = () => {
             >
               {isLogin ? '💕' : '🎁'}
             </motion.div>
-            
-            <motion.h2 
+
+            <motion.h2
               className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent mb-2"
               initial={{ y: -20 }}
               animate={{ y: 0 }}
             >
               {isLogin ? 'Welcome Back!' : 'Create Account'}
             </motion.h2>
-            
-            <motion.p 
+
+            <motion.p
               className="text-sm md:text-base text-gray-600 dark:text-gray-300"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              {isLogin 
-                ? 'Sign in to continue your magical journey' 
+              {isLogin
+                ? 'Sign in to continue your magical journey'
                 : 'Join us and start creating beautiful surprises'}
             </motion.p>
           </div>
@@ -316,7 +318,7 @@ const LoginPage = () => {
                   />
                 </div>
               )}
-              
+
               <div>
                 <input
                   type="email"
@@ -327,7 +329,7 @@ const LoginPage = () => {
                   required
                 />
               </div>
-              
+
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -345,7 +347,7 @@ const LoginPage = () => {
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
-              
+
               {!isLogin && (
                 <div className="relative">
                   <input
@@ -370,7 +372,7 @@ const LoginPage = () => {
                     />
                     <span className="text-sm text-gray-600 dark:text-gray-300">Remember me</span>
                   </label>
-                  
+
                   <button
                     type="button"
                     onClick={() => setResetMode(true)}
@@ -397,7 +399,7 @@ const LoginPage = () => {
                   </span>
                 </label>
               )}
-              
+
               <motion.button
                 type="submit"
                 disabled={loading}
@@ -480,7 +482,7 @@ const LoginPage = () => {
           </div>
 
           {/* Features List */}
-          <motion.div 
+          <motion.div
             className="mt-6 md:mt-8 pt-6 border-t border-pink-200 dark:border-pink-800/30"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

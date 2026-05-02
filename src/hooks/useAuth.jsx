@@ -37,7 +37,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Error signing in with Google:', error);
       setError(error.message);
-      return { success: false, error: error.message };
+      throw error;
+      // return { success: false, error: error.message };
     }
   };
 
@@ -61,15 +62,17 @@ export const AuthProvider = ({ children }) => {
         case 'auth/user-not-found':
           errorMessage = 'No account found with this email';
           break;
-        case 'auth/wrong-password':
-          errorMessage = 'Incorrect password';
+        case 'auth/invalid-credential':
+          errorMessage = 'Incorrect email/password';
           break;
         default:
           errorMessage = error.message;
       }
       
       setError(errorMessage);
-      return { success: false, error: errorMessage };
+
+      let err = {message:errorMessage}
+      throw err;
     }
   };
 
@@ -104,7 +107,8 @@ export const AuthProvider = ({ children }) => {
       }
       
       setError(errorMessage);
-      return { success: false, error: errorMessage };
+      throw error;
+      // return { success: false, error: errorMessage };
     }
   };
 
@@ -130,7 +134,8 @@ export const AuthProvider = ({ children }) => {
       }
       
       setError(errorMessage);
-      return { success: false, error: errorMessage };
+      throw error;
+      // return { success: false, error: errorMessage };
     }
   };
 
@@ -143,7 +148,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Error signing out:', error);
       setError(error.message);
-      return { success: false, error: error.message };
+      throw error;
+      // return { success: false, error: error.message };
     }
   };
 

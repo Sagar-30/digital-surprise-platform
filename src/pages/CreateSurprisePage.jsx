@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
-import useSurpriseStore from '../store/surpriseStore';
+import useSurpriseStore from '../store/surpriseStore.jsx';
 
 const CreateSurprisePage = () => {
   const navigate = useNavigate();

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactConfetti from 'react-confetti';
-import useSurpriseStore from '../store/surpriseStore';
+import useSurpriseStore from '../store/surpriseStore.jsx';
 import CountdownComponent from '../components/surprise/CountdownComponent';
 import PuzzleGameComponent from '../components/surprise/PuzzleGameComponent';
 import MusicPlayer from '../components/surprise/MusicPlayer';
