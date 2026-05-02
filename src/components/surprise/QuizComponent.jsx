@@ -37,11 +37,11 @@ const QuizComponent = ({ questions, onComplete }) => {
         );
         setIsCorrect(allCorrect);
         setShowResult(true);
-        if (allCorrect) {
+        // if (allCorrect) {
           setTimeout(() => {
             onComplete();
           }, 2000);
-        }
+        // }
       }
     }, 500);
   };
@@ -123,14 +123,14 @@ const QuizComponent = ({ questions, onComplete }) => {
                   transition={{ duration: 0.5 }}
                 />
               </div>
-              <motion.button
+              {/* <motion.button
                 onClick={handleTryAgain}
                 className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-pink-500/25 transition-all"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 Try Again 💪
-              </motion.button>
+              </motion.button> */}
             </motion.div>
           )}
         </div>
