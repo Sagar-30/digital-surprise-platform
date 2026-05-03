@@ -17,7 +17,7 @@ import CompletionComponent from '../components/surprise/CompletionComponent';
 const SurpriseViewerPage = () => {
   const { id } = useParams();
   const { getSurprise, currentSurprise, isLoading } = useSurpriseStore();
-  const [stage, setStage] = useState('countdown'); // countdown, puzzle, quiz, gift, message, timeline, video, complete
+  const [stage, setStage] = useState('message'); // countdown, puzzle, quiz, gift, message, timeline, video, complete
   const [showConfetti, setShowConfetti] = useState(false);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -59,8 +59,10 @@ const SurpriseViewerPage = () => {
   };
 
   const handleQuizComplete = () => {
-    setStage('gift');
-    localStorage.setItem("Surprisestage", "gift");
+    // setStage('gift');
+    // localStorage.setItem("Surprisestage", "gift");
+    setStage('message');
+    localStorage.setItem("Surprisestage", "message");
   };
 
   const handleGiftOpen = () => {
