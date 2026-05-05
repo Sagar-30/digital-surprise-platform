@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -12,8 +12,10 @@ const CreateSurprisePageNew = () => {
   const [selectedPlan, setSelectedPlan] = useState('premium');
   const [showPreview, setShowPreview] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState('cute');
-  const [activeModal, setActiveModal] = useState(null); // 'cake', 'bond', 'vibe', 'friend', 'letter'
+  const [activeModal, setActiveModal] = useState(null);
   const [tempBondSelection, setTempBondSelection] = useState([]);
+  const [letterText, setLetterText] = useState('');
+  const [isLetterSaved, setIsLetterSaved] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -24,23 +26,19 @@ const CreateSurprisePageNew = () => {
     bond: ['Sweet', 'Loyal', 'My rock'],
     vibe: 'Sweet & Warm',
     friend: 'Kitty',
-    letter: '',
     images: [],
     music: null,
     video: null,
-    quiz: [],
-    memories: [],
   });
   const [uploading, setUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
-  const [letterText, setLetterText] = useState('');
 
   // Cake options with images
   const cakeOptions = [
-    { value: 'Chocolate Fantasy', emoji: '🍫', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
-    { value: 'Princess Double Storey', emoji: '👑', image: 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=100&h=100&fit=crop', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
-    { value: 'Galaxy Classic', emoji: '🌌', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=100&h=100&fit=crop', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
-    { value: 'Strawberry Princess', emoji: '🍓', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=100&h=100&fit=crop', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
+    { value: 'Chocolate Fantasy', emoji: '🍫', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&h=80&fit=crop', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
+    { value: 'Princess Double Storey', emoji: '👑', image: 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=80&h=80&fit=crop', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
+    { value: 'Galaxy Classic', emoji: '🌌', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
+    { value: 'Strawberry Princess', emoji: '🍓', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
   ];
 
   // Bond options
@@ -74,12 +72,12 @@ const CreateSurprisePageNew = () => {
     return () => urls.forEach(url => URL.revokeObjectURL(url));
   }, [formData.images]);
 
-  const onDrop = (acceptedFiles) => {
+  const onDrop = useCallback((acceptedFiles) => {
     setFormData(prev => ({
       ...prev,
       images: [...prev.images, ...acceptedFiles]
     }));
-  };
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -87,24 +85,27 @@ const CreateSurprisePageNew = () => {
     maxFiles: 5
   });
 
-  const openModal = (modalName) => {
+  const openModal = useCallback((modalName) => {
     if (modalName === 'bond') {
       setTempBondSelection([...formData.bond]);
     }
+    if (modalName === 'letter') {
+      setIsLetterSaved(false);
+    }
     setActiveModal(modalName);
-  };
+  }, [formData.bond]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setActiveModal(null);
     setTempBondSelection([]);
-  };
+  }, []);
 
-  const saveBondSelection = () => {
-    setFormData({ ...formData, bond: tempBondSelection });
+  const saveBondSelection = useCallback(() => {
+    setFormData(prev => ({ ...prev, bond: tempBondSelection }));
     closeModal();
-  };
+  }, [tempBondSelection, closeModal]);
 
-  const handleBondToggle = (bondValue) => {
+  const handleBondToggle = useCallback((bondValue) => {
     setTempBondSelection(prev => {
       if (prev.includes(bondValue)) {
         return prev.filter(b => b !== bondValue);
@@ -116,7 +117,12 @@ const CreateSurprisePageNew = () => {
         return prev;
       }
     });
-  };
+  }, []);
+
+  const saveLetter = useCallback(() => {
+    setIsLetterSaved(true);
+    closeModal();
+  }, [closeModal]);
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.unlockDate) {
@@ -142,18 +148,24 @@ const CreateSurprisePageNew = () => {
         videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
       }
 
+      const defaultLetter = `Dear ${formData.name || 'Friend'},
+
+Happy Birthday! 🎂
+
+You mean the world to me. Every moment with you is special, and I wanted to create something unique just for you.
+
+This surprise is made with lots of love and care. I hope it brings a smile to your face!
+
+With all my love,
+❤️`;
+
       const surpriseData = {
-        name: formData.name,
-        occasion: formData.occasion,
-        unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
-        cake: formData.cake,
-        bond: formData.bond,
-        vibe: formData.vibe,
-        friend: formData.friend,
-        letter: letterText || formData.letter,
+        ...formData,
+        letter: letterText || defaultLetter,
         images: imageUrls,
         music: musicUrl,
         video: videoUrl,
+        unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
         status: 'active',
         createdAt: new Date().toISOString()
       };
@@ -169,9 +181,11 @@ const CreateSurprisePageNew = () => {
     }
   };
 
-  const StarField = () => (
+  // Star Field Component
+  const StarField = useMemo(() => () => (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
-      {[...Array(50)].map((_, i) => (
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-blue-950 to-indigo-950" />
+      {[...Array(100)].map((_, i) => (
         <motion.div
           key={i}
           className="absolute w-0.5 h-0.5 bg-white rounded-full"
@@ -181,29 +195,40 @@ const CreateSurprisePageNew = () => {
           }}
           animate={{
             y: [0, -100, 0],
-            opacity: [0, 1, 0],
+            opacity: [0, Math.random() * 0.8 + 0.2, 0],
           }}
           transition={{
-            duration: Math.random() * 5 + 3,
+            duration: Math.random() * 6 + 4,
             repeat: Infinity,
-            delay: Math.random() * 5,
+            delay: Math.random() * 10,
           }}
         />
       ))}
+      <motion.div
+        className="absolute top-10 right-10 w-16 h-16 bg-yellow-100 rounded-full shadow-2xl"
+        animate={{ scale: [1, 1.05, 1] }}
+        transition={{ duration: 4, repeat: Infinity }}
+      />
+      <div className="absolute top-10 right-10 w-16 h-16 bg-gray-950 rounded-full transform translate-x-3 -translate-y-2" />
     </div>
-  );
+  ), []);
 
   // Cake Selection Modal
   const CakeModal = () => (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div 
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+      onClick={closeModal}
+    >
       <motion.div
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
-        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-blue-900/95">
-          <h3 className="text-white font-bold text-lg">Choose a cake 🍰</h3>
+        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-gray-900/95">
+          <h3 className="text-white font-semibold text-lg font-poppins">Choose a cake 🍰</h3>
           <button onClick={closeModal} className="text-white text-2xl">✕</button>
         </div>
         <div className="p-4 overflow-y-auto space-y-3">
@@ -211,16 +236,16 @@ const CreateSurprisePageNew = () => {
             <button
               key={cake.value}
               onClick={() => {
-                setFormData({ ...formData, cake: cake.value });
+                setFormData(prev => ({ ...prev, cake: cake.value }));
                 closeModal();
               }}
               className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${formData.cake === cake.value ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
             >
-              <img src={cake.image} alt={cake.label} className="w-12 h-12 rounded-lg object-cover" />
+              <img src={cake.image} alt={cake.label} className="w-14 h-14 rounded-lg object-cover" />
               <div className="flex-1 text-left">
                 <div className="flex items-center gap-1">
                   <span className="text-xl">{cake.emoji}</span>
-                  <span className="text-white font-semibold">{cake.label}</span>
+                  <span className="text-white font-medium font-poppins">{cake.label}</span>
                 </div>
                 <p className="text-white/60 text-xs">{cake.desc}</p>
               </div>
@@ -234,17 +259,15 @@ const CreateSurprisePageNew = () => {
 
   // Bond Selection Modal
   const BondModal = () => (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <motion.div
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0 }}
-        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
-      >
-        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-blue-900/95">
+    <div 
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+      onClick={closeModal}
+    >
+      <div className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col">
+        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-gray-900/95">
           <div>
-            <h3 className="text-white font-bold text-lg">What describes your bond? 💗</h3>
-            <p className="text-pink-300 text-xs">Choose any 3 ({tempBondSelection.length}/3)</p>
+            <h3 className="text-white font-semibold text-lg font-poppins">What describes your bond? 💗</h3>
+            <p className="text-pink-300 text-xs mt-1">Choose any 3 ({tempBondSelection.length}/3)</p>
           </div>
           <button onClick={closeModal} className="text-white text-2xl">✕</button>
         </div>
@@ -258,36 +281,41 @@ const CreateSurprisePageNew = () => {
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-2xl">{bond.emoji}</span>
-                  <span className="text-white font-semibold">{bond.label}</span>
+                  <span className="text-white font-medium font-poppins">{bond.label}</span>
                 </div>
                 <p className="text-white/50 text-xs">{bond.desc}</p>
               </button>
             ))}
           </div>
         </div>
-        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-blue-900/95">
+        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-gray-900/95">
           <button
             onClick={saveBondSelection}
-            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold"
+            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold font-poppins"
           >
-            Save Selection
+            Save Selection ({tempBondSelection.length}/3)
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 
   // Vibe Selection Modal
   const VibeModal = () => (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div 
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+      onClick={closeModal}
+    >
       <motion.div
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
-        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden"
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-white/20 flex justify-between items-center">
-          <h3 className="text-white font-bold text-lg">Pick the vibe ✨</h3>
+          <h3 className="text-white font-semibold text-lg font-poppins">Pick the vibe ✨</h3>
           <button onClick={closeModal} className="text-white text-2xl">✕</button>
         </div>
         <div className="p-4 space-y-3">
@@ -295,7 +323,7 @@ const CreateSurprisePageNew = () => {
             <button
               key={vibe.value}
               onClick={() => {
-                setFormData({ ...formData, vibe: vibe.value });
+                setFormData(prev => ({ ...prev, vibe: vibe.value }));
                 closeModal();
               }}
               className={`w-full p-4 rounded-xl text-left transition-all ${formData.vibe === vibe.value ? `bg-gradient-to-r ${vibe.color} shadow-lg` : 'bg-white/10 hover:bg-white/20'}`}
@@ -303,7 +331,7 @@ const CreateSurprisePageNew = () => {
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{vibe.emoji}</span>
                 <div>
-                  <div className="text-white font-semibold">{vibe.label}</div>
+                  <div className="text-white font-medium font-poppins">{vibe.label}</div>
                   <p className="text-white/60 text-xs">{vibe.desc}</p>
                 </div>
               </div>
@@ -316,15 +344,20 @@ const CreateSurprisePageNew = () => {
 
   // Friend Selection Modal
   const FriendModal = () => (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div 
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+      onClick={closeModal}
+    >
       <motion.div
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
-        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden"
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-white/20 flex justify-between items-center">
-          <h3 className="text-white font-bold text-lg">Choose a little friend 🧸</h3>
+          <h3 className="text-white font-semibold text-lg font-poppins">Choose a little friend 🧸</h3>
           <button onClick={closeModal} className="text-white text-2xl">✕</button>
         </div>
         <div className="p-4 space-y-3">
@@ -332,7 +365,7 @@ const CreateSurprisePageNew = () => {
             <button
               key={friend.value}
               onClick={() => {
-                setFormData({ ...formData, friend: friend.value });
+                setFormData(prev => ({ ...prev, friend: friend.value }));
                 closeModal();
               }}
               className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${formData.friend === friend.value ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
@@ -341,7 +374,7 @@ const CreateSurprisePageNew = () => {
               <div className="flex-1 text-left">
                 <div className="flex items-center gap-1">
                   <span className="text-xl">{friend.emoji}</span>
-                  <span className="text-white font-semibold">{friend.label}</span>
+                  <span className="text-white font-medium font-poppins">{friend.label}</span>
                 </div>
                 <p className="text-white/60 text-xs">{friend.desc}</p>
               </div>
@@ -353,43 +386,48 @@ const CreateSurprisePageNew = () => {
     </div>
   );
 
-  // Letter Editor Modal
+  // Letter Editor Modal - Fixed re-render issue
   const LetterModal = () => (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div 
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+      onClick={closeModal}
+    >
       <motion.div
         initial={{ y: '100%', opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: '100%', opacity: 0 }}
-        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-blue-900/95">
-          <h3 className="text-white font-bold text-lg">Edit your letter 💌</h3>
+        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-gray-900/95">
+          <h3 className="text-white font-semibold text-lg font-poppins">Edit your letter 💌</h3>
           <button onClick={closeModal} className="text-white text-2xl">✕</button>
         </div>
         <div className="p-4 overflow-y-auto">
           <div className="bg-white/10 rounded-xl p-4 mb-4">
             <p className="text-white/60 text-xs mb-2">Preview</p>
-            <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-white/80 text-sm italic">
-                {letterText || formData.letter || `Dear ${formData.name || 'Friend'},`}
+            <div className="bg-white/5 rounded-lg p-3 max-h-32 overflow-y-auto">
+              <p className="text-white/80 text-sm italic whitespace-pre-wrap font-poppins">
+                {letterText || `Dear ${formData.name || 'Friend'},\n\nHappy Birthday! 🎂\n\nYou mean the world to me...`}
               </p>
             </div>
           </div>
           
           <div className="bg-white/10 rounded-xl p-4">
-            <label className="text-white/80 text-sm mb-2 block">Write your heartfelt message:</label>
+            <label className="text-white/80 text-sm mb-2 block font-poppins">Write your heartfelt message:</label>
             <textarea
-              value={letterText || formData.letter || `Dear ${formData.name || 'Friend'},\n\nHappy Birthday! 🎂\n\nYou mean the world to me. Every moment with you is special, and I wanted to create something unique just for you.\n\nThis surprise is made with lots of love and care. I hope it brings a smile to your face!\n\nWith all my love,\n❤️`}
+              value={letterText}
               onChange={(e) => setLetterText(e.target.value)}
-              rows={10}
-              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              rows={12}
+              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 font-poppins text-sm"
               placeholder="Write your special message here..."
             />
           </div>
           
           <div className="bg-white/10 rounded-xl p-4 mt-4">
-            <p className="text-white/60 text-xs mb-2">💡 Tips for a great letter:</p>
-            <ul className="text-white/50 text-xs space-y-1 list-disc pl-4">
+            <p className="text-white/60 text-xs mb-2 font-poppins">💡 Tips for a great letter:</p>
+            <ul className="text-white/50 text-xs space-y-1 list-disc pl-4 font-poppins">
               <li>Start with a warm greeting</li>
               <li>Share a favorite memory</li>
               <li>Express your feelings honestly</li>
@@ -397,13 +435,10 @@ const CreateSurprisePageNew = () => {
             </ul>
           </div>
         </div>
-        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-blue-900/95">
+        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-gray-900/95">
           <button
-            onClick={() => {
-              setFormData({ ...formData, letter: letterText });
-              closeModal();
-            }}
-            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold"
+            onClick={saveLetter}
+            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold font-poppins"
           >
             Save Letter
           </button>
@@ -413,12 +448,12 @@ const CreateSurprisePageNew = () => {
   );
 
   const PreviewModal = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-3xl overflow-hidden"
+        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-3xl overflow-hidden"
       >
         <div className="relative bg-black rounded-3xl p-2">
           <div className="bg-gradient-to-br from-pink-100 to-purple-100 rounded-2xl overflow-hidden">
@@ -427,14 +462,14 @@ const CreateSurprisePageNew = () => {
                 <div className="w-20 h-20 mx-auto bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-4xl mb-3">
                   🎂
                 </div>
-                <h3 className="text-lg font-bold text-gray-800">Happy Birthday, {formData.name || 'Friend'}!</h3>
-                <p className="text-sm text-gray-600">Get ready for a magical surprise! ✨</p>
+                <h3 className="text-lg font-bold text-gray-800 font-poppins">Happy Birthday, {formData.name || 'Friend'}!</h3>
+                <p className="text-sm text-gray-600 font-poppins">Get ready for a magical surprise! ✨</p>
               </div>
 
               <div className="bg-white/50 rounded-xl p-4 mb-4">
                 <div className="text-center">
                   <div className="text-2xl mb-2">🎬</div>
-                  <p className="text-sm text-gray-700">Preview of your surprise</p>
+                  <p className="text-sm text-gray-700 font-poppins">Preview of your surprise</p>
                   <div className="mt-2 h-1 bg-gray-300 rounded-full overflow-hidden">
                     <div className="w-1/2 h-full bg-pink-500 rounded-full" />
                   </div>
@@ -442,23 +477,23 @@ const CreateSurprisePageNew = () => {
               </div>
 
               <div className="space-y-3 mb-4">
-                <p className="text-sm font-semibold text-gray-700 text-center">Pick a style — this is how it will look</p>
+                <p className="text-sm font-semibold text-gray-700 text-center font-poppins">Pick a style — this is how it will look</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setSelectedStyle('classic')}
                     className={`p-3 rounded-xl transition-all ${selectedStyle === 'classic' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'bg-white/50 text-gray-700'}`}
                   >
                     <div className="text-xl mb-1">✨ 💜 ✨</div>
-                    <div className="text-sm font-semibold">Classic</div>
-                    <div className="text-xs">Magical & Cinematic</div>
+                    <div className="text-sm font-semibold font-poppins">Classic</div>
+                    <div className="text-xs font-poppins">Magical & Cinematic</div>
                   </button>
                   <button
                     onClick={() => setSelectedStyle('cute')}
                     className={`p-3 rounded-xl transition-all ${selectedStyle === 'cute' ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg' : 'bg-white/50 text-gray-700'}`}
                   >
                     <div className="text-xl mb-1">♥ ♡ ❤</div>
-                    <div className="text-sm font-semibold">Cute & Sweet</div>
-                    <div className="text-xs">Playful & Pink</div>
+                    <div className="text-sm font-semibold font-poppins">Cute & Sweet</div>
+                    <div className="text-xs font-poppins">Playful & Pink</div>
                   </button>
                 </div>
               </div>
@@ -466,18 +501,18 @@ const CreateSurprisePageNew = () => {
               <div className="space-y-3 mb-4">
                 <div className="bg-white/30 rounded-xl p-3">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-600 line-through">₹499</span>
-                    <span className="text-2xl font-bold text-pink-600">₹199</span>
-                    <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">60% OFF</span>
+                    <span className="text-sm text-gray-600 line-through font-poppins">₹499</span>
+                    <span className="text-2xl font-bold text-pink-600 font-poppins">₹199</span>
+                    <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full font-poppins">60% OFF</span>
                   </div>
                   <button
                     onClick={handleSubmit}
                     disabled={uploading}
-                    className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50"
+                    className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50 font-poppins"
                   >
                     {uploading ? 'Creating...' : 'Get this at ₹199'}
                   </button>
-                  <div className="mt-2 text-center text-xs text-gray-600">
+                  <div className="mt-2 text-center text-xs text-gray-600 font-poppins">
                     ✓ Secure payment via Razorpay<br />
                     ⚡ Instant delivery after payment
                   </div>
@@ -498,14 +533,14 @@ const CreateSurprisePageNew = () => {
   );
 
   return (
-    <div className="min-h-screen py-8 px-4 relative overflow-hidden bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
+    <div className="min-h-screen py-8 px-4 relative overflow-hidden">
       <StarField />
 
       <div className="container mx-auto max-w-md relative z-10">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3 animate-bounce">🎂</div>
-          <h1 className="text-2xl font-bold text-white">Create a Birthday Surprise</h1>
-          <p className="text-sm text-purple-200">Make someone's day extra special! ✨</p>
+          <h1 className="text-2xl font-bold text-white font-poppins">Create a Birthday Surprise</h1>
+          <p className="text-sm text-purple-200 font-poppins">Make someone's day extra special! ✨</p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -515,43 +550,44 @@ const CreateSurprisePageNew = () => {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
               className="space-y-4"
             >
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                <label className="block text-white mb-2 font-semibold">
+                <label className="block text-white mb-2 font-semibold font-poppins">
                   Whose birthday is it? <span className="text-pink-300">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 font-poppins"
                   placeholder="Enter name"
                 />
               </div>
 
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                <label className="block text-white mb-2 font-semibold">
+                <label className="block text-white mb-2 font-semibold font-poppins">
                   When is the special day? <span className="text-pink-300">*</span>
                 </label>
                 <input
                   type="date"
                   value={formData.unlockDate}
-                  onChange={(e) => setFormData({ ...formData, unlockDate: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 mb-3"
+                  onChange={(e) => setFormData(prev => ({ ...prev, unlockDate: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 mb-3 font-poppins"
                 />
                 <input
                   type="time"
                   value={formData.unlockTime}
-                  onChange={(e) => setFormData({ ...formData, unlockTime: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  onChange={(e) => setFormData(prev => ({ ...prev, unlockTime: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 font-poppins"
                 />
               </div>
 
               <button
                 onClick={() => setStep(2)}
                 disabled={!formData.name || !formData.unlockDate}
-                className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50 transition-transform hover:scale-[1.02] active:scale-[0.98] font-poppins"
               >
                 Continue →
               </button>
@@ -564,40 +600,52 @@ const CreateSurprisePageNew = () => {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
               className="space-y-4 pb-20"
             >
-              {/* Cake Selection */}
+              {/* Cake Selection with Image */}
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-white font-semibold">Cake 🍰</label>
+                  <label className="text-white font-semibold font-poppins">Cake 🍰</label>
                   <button
                     onClick={() => openModal('cake')}
-                    className="text-sm text-pink-300 hover:text-pink-200"
+                    className="text-sm text-pink-300 hover:text-pink-200 font-poppins"
                   >
                     Change
                   </button>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
-                  <span className="text-3xl">{cakeOptions.find(c => c.value === formData.cake)?.emoji}</span>
-                  <span className="text-white">{formData.cake}</span>
+                  <img 
+                    src={cakeOptions.find(c => c.value === formData.cake)?.image} 
+                    alt={formData.cake}
+                    className="w-12 h-12 rounded-lg object-cover"
+                  />
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xl">{cakeOptions.find(c => c.value === formData.cake)?.emoji}</span>
+                      <span className="text-white font-medium font-poppins">{formData.cake}</span>
+                    </div>
+                    <p className="text-white/50 text-xs font-poppins">{cakeOptions.find(c => c.value === formData.cake)?.desc}</p>
+                  </div>
                 </div>
               </div>
 
               {/* Bond Selection */}
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-white font-semibold">Bond 💗</label>
+                  <label className="text-white font-semibold font-poppins">Bond 💗</label>
                   <button
                     onClick={() => openModal('bond')}
-                    className="text-sm text-pink-300 hover:text-pink-200"
+                    className="text-sm text-pink-300 hover:text-pink-200 font-poppins"
                   >
                     Change
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {formData.bond.map((bond) => (
-                    <span key={bond} className="px-3 py-1 bg-white/10 rounded-full text-white text-sm">
-                      {bondOptions.find(b => b.value === bond)?.emoji} {bond}
+                    <span key={bond} className="px-3 py-1 bg-white/10 rounded-full text-white text-sm flex items-center gap-1 font-poppins">
+                      <span>{bondOptions.find(b => b.value === bond)?.emoji}</span>
+                      {bond}
                     </span>
                   ))}
                 </div>
@@ -606,58 +654,68 @@ const CreateSurprisePageNew = () => {
               {/* Vibe Selection */}
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-white font-semibold">Vibe ✨</label>
+                  <label className="text-white font-semibold font-poppins">Vibe ✨</label>
                   <button
                     onClick={() => openModal('vibe')}
-                    className="text-sm text-pink-300 hover:text-pink-200"
+                    className="text-sm text-pink-300 hover:text-pink-200 font-poppins"
                   >
                     Change
                   </button>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
                   <span className="text-2xl">{vibeOptions.find(v => v.value === formData.vibe)?.emoji}</span>
-                  <span className="text-white">{formData.vibe}</span>
+                  <span className="text-white font-poppins">{formData.vibe}</span>
                 </div>
               </div>
 
               {/* Friend Selection */}
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-white font-semibold">Little Friend 🧸</label>
+                  <label className="text-white font-semibold font-poppins">Little Friend 🧸</label>
                   <button
                     onClick={() => openModal('friend')}
-                    className="text-sm text-pink-300 hover:text-pink-200"
+                    className="text-sm text-pink-300 hover:text-pink-200 font-poppins"
                   >
                     Change
                   </button>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
-                  <span className="text-2xl">{friendOptions.find(f => f.value === formData.friend)?.emoji}</span>
-                  <span className="text-white">{formData.friend}</span>
+                  <img 
+                    src={friendOptions.find(f => f.value === formData.friend)?.image} 
+                    alt={formData.friend}
+                    className="w-10 h-10 object-contain"
+                  />
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xl">{friendOptions.find(f => f.value === formData.friend)?.emoji}</span>
+                      <span className="text-white font-medium font-poppins">{formData.friend}</span>
+                    </div>
+                    <p className="text-white/50 text-xs font-poppins">{friendOptions.find(f => f.value === formData.friend)?.desc}</p>
+                  </div>
                 </div>
               </div>
 
               {/* Letter */}
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-white font-semibold">Letter 💌</label>
+                  <label className="text-white font-semibold font-poppins">Letter 💌</label>
                   <button
                     onClick={() => openModal('letter')}
-                    className="text-sm text-pink-300 hover:text-pink-200"
+                    className="text-sm text-pink-300 hover:text-pink-200 font-poppins"
                   >
-                    Edit
+                    {isLetterSaved || letterText ? 'Edit' : 'Write'}
                   </button>
                 </div>
                 <div className="p-3 bg-white/10 rounded-xl min-h-[80px]">
-                  <p className="text-white/80 text-sm line-clamp-3">
-                    {letterText || formData.letter || `Dear ${formData.name || 'Friend'},`}
+                  <p className="text-white/80 text-sm line-clamp-3 font-poppins">
+                    {letterText || `Dear ${formData.name || 'Friend'},`}
                   </p>
                 </div>
               </div>
 
               {/* Photos Upload */}
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
-                <label className="block text-white mb-2 font-semibold">
+                <label className="block text-white mb-2 font-semibold font-poppins">
                   Upload Photos 📸 <span className="text-pink-300">*</span>
                 </label>
                 <div
@@ -666,8 +724,8 @@ const CreateSurprisePageNew = () => {
                 >
                   <input {...getInputProps()} />
                   <div className="text-3xl mb-1">📷</div>
-                  <p className="text-white/70 text-sm">Drag & drop or click to upload</p>
-                  <p className="text-white/50 text-xs">Max 5 photos</p>
+                  <p className="text-white/70 text-sm font-poppins">Drag & drop or click to upload</p>
+                  <p className="text-white/50 text-xs font-poppins">Max 5 photos</p>
                 </div>
                 {previewImages.length > 0 && (
                   <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
@@ -688,35 +746,35 @@ const CreateSurprisePageNew = () => {
 
               {/* Music & Video Upload */}
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
-                <label className="block text-white mb-2 font-semibold">Background Music 🎵</label>
+                <label className="block text-white mb-2 font-semibold font-poppins">Background Music 🎵</label>
                 <input
                   type="file"
                   accept="audio/*"
-                  onChange={(e) => setFormData({ ...formData, music: e.target.files[0] })}
-                  className="w-full text-white/70 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-pink-500 file:text-white"
+                  onChange={(e) => setFormData(prev => ({ ...prev, music: e.target.files[0] }))}
+                  className="w-full text-white/70 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-pink-500 file:text-white font-poppins"
                 />
               </div>
 
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
-                <label className="block text-white mb-2 font-semibold">Video Message 🎬</label>
+                <label className="block text-white mb-2 font-semibold font-poppins">Video Message 🎬</label>
                 <input
                   type="file"
                   accept="video/*"
-                  onChange={(e) => setFormData({ ...formData, video: e.target.files[0] })}
-                  className="w-full text-white/70 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-pink-500 file:text-white"
+                  onChange={(e) => setFormData(prev => ({ ...prev, video: e.target.files[0] }))}
+                  className="w-full text-white/70 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-pink-500 file:text-white font-poppins"
                 />
               </div>
 
               <div className="flex gap-3 sticky bottom-4">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 py-3 bg-white/20 text-white rounded-xl font-semibold"
+                  className="flex-1 py-3 bg-white/20 text-white rounded-xl font-semibold font-poppins"
                 >
                   Back
                 </button>
                 <button
                   onClick={() => setShowPreview(true)}
-                  className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg"
+                  className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg font-poppins"
                 >
                   See Preview →
                 </button>
