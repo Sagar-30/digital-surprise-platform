@@ -7,6 +7,9 @@ import SurpriseViewerPage from './pages/SurpriseViewerPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SharePage from './pages/SharePage.jsx';
 
+//test
+import CreateSurprisePageNew from './pages/CreateSurprisePage_Old.jsx';
+
 function App() {
   return (
     <AuthProvider>
@@ -14,7 +17,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/create" element={<CreateSurprisePage />} />
+        <Route path="/create" element={<CreateSurprisePageNew />} />
         <Route path="/share" element={<SharePage />} />
         <Route path="/surprise/:id" element={<SurpriseViewerPage />} />
       </Routes>

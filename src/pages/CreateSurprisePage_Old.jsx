@@ -5,25 +5,67 @@ import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import useSurpriseStore from '../store/surpriseStore.jsx';
 
-const CreateSurprisePage = () => {
+const CreateSurprisePageNew = () => {
   const navigate = useNavigate();
   const { createSurprise, uploadFile } = useSurpriseStore();
   const [step, setStep] = useState(1);
+  const [selectedPlan, setSelectedPlan] = useState('premium');
+  const [showPreview, setShowPreview] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState('cute');
+  const [activeModal, setActiveModal] = useState(null); // 'cake', 'bond', 'vibe', 'friend', 'letter'
+  const [tempBondSelection, setTempBondSelection] = useState([]);
+  
   const [formData, setFormData] = useState({
-    title: '',
+    name: '',
     occasion: 'birthday',
     unlockDate: '',
-    message: '',
+    unlockTime: '',
+    cake: 'Strawberry Princess',
+    bond: ['Sweet', 'Loyal', 'My rock'],
+    vibe: 'Sweet & Warm',
+    friend: 'Kitty',
+    letter: '',
     images: [],
     music: null,
     video: null,
     quiz: [],
     memories: [],
-    hasPassword: false,
-    password: '',
   });
   const [uploading, setUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
+  const [letterText, setLetterText] = useState('');
+
+  // Cake options with images
+  const cakeOptions = [
+    { value: 'Chocolate Fantasy', emoji: '🍫', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
+    { value: 'Princess Double Storey', emoji: '👑', image: 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=100&h=100&fit=crop', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
+    { value: 'Galaxy Classic', emoji: '🌌', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=100&h=100&fit=crop', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
+    { value: 'Strawberry Princess', emoji: '🍓', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=100&h=100&fit=crop', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
+  ];
+
+  // Bond options
+  const bondOptions = [
+    { value: 'Sweet', emoji: '💗', label: 'Sweet', desc: 'Always caring and kind' },
+    { value: 'Loyal', emoji: '🤝', label: 'Loyal', desc: 'Stands by your side always' },
+    { value: 'My rock', emoji: '🪨', label: 'My rock', desc: 'Strong and dependable' },
+    { value: 'Bestie', emoji: '⭐', label: 'Bestie', desc: 'Partner in crime' },
+    { value: 'Always there', emoji: '🤍', label: 'Always there', desc: 'Never let you down' },
+    { value: 'Kind heart', emoji: '😊', label: 'Kind heart', desc: 'Pure and gentle soul' }
+  ];
+
+  // Vibe options
+  const vibeOptions = [
+    { value: 'Sweet & Warm', emoji: '🎀', label: 'Sweet & Warm', color: 'from-pink-400 to-rose-400', desc: 'Cozy and heartwarming' },
+    { value: 'Fun & Playful', emoji: '😂', label: 'Fun & Playful', color: 'from-yellow-400 to-orange-400', desc: 'Energetic and joyful' },
+    { value: 'Deep Love', emoji: '🔥', label: 'Deep Love', color: 'from-red-400 to-pink-500', desc: 'Passionate and romantic' }
+  ];
+
+  // Friend options
+  const friendOptions = [
+    { value: 'Bunny', emoji: '🐰', image: 'https://cdn-icons-png.flaticon.com/512/616/616408.png', label: 'Bunny', desc: 'Soft and cuddly companion' },
+    { value: 'Kitty', emoji: '🐱', image: 'https://cdn-icons-png.flaticon.com/512/616/616430.png', label: 'Kitty', desc: 'Playful and curious friend' },
+    { value: 'Teddy', emoji: '🧸', image: 'https://cdn-icons-png.flaticon.com/512/616/616478.png', label: 'Teddy', desc: 'Classic bear hugger' }
+  ];
 
   // Generate preview URLs for images
   useEffect(() => {
@@ -32,23 +74,52 @@ const CreateSurprisePage = () => {
     return () => urls.forEach(url => URL.revokeObjectURL(url));
   }, [formData.images]);
 
-  const onDrop = (acceptedFiles, type) => {
+  const onDrop = (acceptedFiles) => {
     setFormData(prev => ({
       ...prev,
-      [type]: [...prev[type], ...acceptedFiles]
+      images: [...prev.images, ...acceptedFiles]
     }));
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: (files) => onDrop(files, 'images'),
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif']
-    },
-    maxFiles: 10
+    onDrop,
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] },
+    maxFiles: 5
   });
 
+  const openModal = (modalName) => {
+    if (modalName === 'bond') {
+      setTempBondSelection([...formData.bond]);
+    }
+    setActiveModal(modalName);
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+    setTempBondSelection([]);
+  };
+
+  const saveBondSelection = () => {
+    setFormData({ ...formData, bond: tempBondSelection });
+    closeModal();
+  };
+
+  const handleBondToggle = (bondValue) => {
+    setTempBondSelection(prev => {
+      if (prev.includes(bondValue)) {
+        return prev.filter(b => b !== bondValue);
+      } else {
+        if (prev.length < 3) {
+          return [...prev, bondValue];
+        }
+        toast.error('You can only select up to 3 bonds');
+        return prev;
+      }
+    });
+  };
+
   const handleSubmit = async () => {
-    if (!formData.title || !formData.unlockDate || !formData.message) {
+    if (!formData.name || !formData.unlockDate) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -72,7 +143,14 @@ const CreateSurprisePage = () => {
       }
 
       const surpriseData = {
-        ...formData,
+        name: formData.name,
+        occasion: formData.occasion,
+        unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
+        cake: formData.cake,
+        bond: formData.bond,
+        vibe: formData.vibe,
+        friend: formData.friend,
+        letter: letterText || formData.letter,
         images: imageUrls,
         music: musicUrl,
         video: videoUrl,
@@ -82,7 +160,7 @@ const CreateSurprisePage = () => {
 
       const id = await createSurprise(surpriseData);
       toast.success('Surprise created successfully! 🎉');
-      navigate(`/surprise/${id}`);
+      navigate(`/payment/${id}?plan=${selectedPlan}&style=${selectedStyle}`);
     } catch (error) {
       toast.error('Failed to create surprise');
       console.error(error);
@@ -91,706 +169,573 @@ const CreateSurprisePage = () => {
     }
   };
 
-  const steps = [
-    { number: 1, title: "Basic Info", icon: "💝", color: "from-pink-400 to-rose-400" },
-    { number: 2, title: "Add Media", icon: "📸", color: "from-purple-400 to-indigo-400" },
-    { number: 3, title: "Interactive", icon: "🎮", color: "from-blue-400 to-cyan-400" },
-    { number: 4, title: "Publish", icon: "✨", color: "from-orange-400 to-amber-400" }
-  ];
-
-  const occasions = [
-    { value: 'birthday', label: 'Birthday', emoji: '🎂', color: 'from-pink-400 to-rose-400' },
-    { value: 'anniversary', label: 'Anniversary', emoji: '💝', color: 'from-purple-400 to-indigo-400' },
-    { value: 'graduation', label: 'Graduation', emoji: '🎓', color: 'from-blue-400 to-cyan-400' },
-    { value: 'just-because', label: 'Just Because', emoji: '✨', color: 'from-orange-400 to-amber-400' }
-  ];
-
-  return (
-    <div className="min-h-screen py-8 md:py-12 px-4 relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="fixed inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100 dark:from-pink-900 dark:via-purple-900 dark:to-blue-900" />
-
-        {/* Animated blobs */}
+  const StarField = () => (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {[...Array(50)].map((_, i) => (
         <motion.div
-          className="absolute top-20 left-10 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 dark:opacity-20"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, 50, 0],
+          key={i}
+          className="absolute w-0.5 h-0.5 bg-white rounded-full"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-20 right-10 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 dark:opacity-20"
           animate={{
-            x: [0, -100, 0],
-            y: [0, -50, 0],
+            y: [0, -100, 0],
+            opacity: [0, 1, 0],
           }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+          transition={{
+            duration: Math.random() * 5 + 3,
+            repeat: Infinity,
+            delay: Math.random() * 5,
+          }}
         />
+      ))}
+    </div>
+  );
 
-        {/* Floating hearts */}
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-xl md:text-2xl pointer-events-none"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -80, 0],
-              x: [0, Math.random() * 40 - 20, 0],
-              opacity: [0, 0.4, 0],
-            }}
-            transition={{
-              duration: Math.random() * 5 + 3,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-            }}
-          >
-            {['💕', '💝', '💖', '💗'][i % 4]}
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="container mx-auto max-w-4xl relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 md:mb-8"
-        >
-          {/* Header */}
-          <div className="text-center mb-6 md:mb-8">
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="text-5xl md:text-6xl mb-3"
+  // Cake Selection Modal
+  const CakeModal = () => (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
+      >
+        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-blue-900/95">
+          <h3 className="text-white font-bold text-lg">Choose a cake 🍰</h3>
+          <button onClick={closeModal} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 overflow-y-auto space-y-3">
+          {cakeOptions.map((cake) => (
+            <button
+              key={cake.value}
+              onClick={() => {
+                setFormData({ ...formData, cake: cake.value });
+                closeModal();
+              }}
+              className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${formData.cake === cake.value ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
             >
-              🎀
-            </motion.div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent mb-2">
-              Create Your Surprise
-            </h1>
-            <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">
-              Let's make something magical and memorable! ✨
-            </p>
-          </div>
-
-          {/* Progress Steps - Responsive */}
-          <div className="mb-8 md:mb-12">
-            <div className="flex justify-between items-center">
-              {steps.map((s, idx) => (
-                <div key={s.number} className="flex-1 flex flex-col items-center">
-                  <motion.div
-                    className={`relative z-10 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base ${step >= s.number
-                      ? `bg-gradient-to-r ${s.color} shadow-lg`
-                      : 'bg-gray-300 dark:bg-gray-700'
-                      }`}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    {step > s.number ? '✓' : s.icon}
-                  </motion.div>
-                  <div className="text-center mt-2">
-                    <p className="text-xs md:text-sm font-semibold text-gray-700 dark:text-gray-300 hidden sm:block">
-                      {s.title}
-                    </p>
-                  </div>
-                  {idx < steps.length - 1 && (
-                    <div className="hidden md:block absolute w-1/3 h-0.5 bg-gray-300 dark:bg-gray-700"
-                      style={{ left: `${(idx + 1) * 25}%`, top: '20px' }} />
-                  )}
+              <img src={cake.image} alt={cake.label} className="w-12 h-12 rounded-lg object-cover" />
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-1">
+                  <span className="text-xl">{cake.emoji}</span>
+                  <span className="text-white font-semibold">{cake.label}</span>
                 </div>
-              ))}
-            </div>
-            {/* Mobile step indicator */}
-            <div className="text-center mt-4 md:hidden">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Step {step} of 4: {steps[step - 1].title}
+                <p className="text-white/60 text-xs">{cake.desc}</p>
+              </div>
+              {formData.cake === cake.value && <span className="text-pink-400 text-xl">✓</span>}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+
+  // Bond Selection Modal
+  const BondModal = () => (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
+      >
+        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-blue-900/95">
+          <div>
+            <h3 className="text-white font-bold text-lg">What describes your bond? 💗</h3>
+            <p className="text-pink-300 text-xs">Choose any 3 ({tempBondSelection.length}/3)</p>
+          </div>
+          <button onClick={closeModal} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 overflow-y-auto">
+          <div className="grid grid-cols-2 gap-3">
+            {bondOptions.map((bond) => (
+              <button
+                key={bond.value}
+                onClick={() => handleBondToggle(bond.value)}
+                className={`p-3 rounded-xl text-left transition-all ${tempBondSelection.includes(bond.value) ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-2xl">{bond.emoji}</span>
+                  <span className="text-white font-semibold">{bond.label}</span>
+                </div>
+                <p className="text-white/50 text-xs">{bond.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-blue-900/95">
+          <button
+            onClick={saveBondSelection}
+            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold"
+          >
+            Save Selection
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+
+  // Vibe Selection Modal
+  const VibeModal = () => (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden"
+      >
+        <div className="p-4 border-b border-white/20 flex justify-between items-center">
+          <h3 className="text-white font-bold text-lg">Pick the vibe ✨</h3>
+          <button onClick={closeModal} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 space-y-3">
+          {vibeOptions.map((vibe) => (
+            <button
+              key={vibe.value}
+              onClick={() => {
+                setFormData({ ...formData, vibe: vibe.value });
+                closeModal();
+              }}
+              className={`w-full p-4 rounded-xl text-left transition-all ${formData.vibe === vibe.value ? `bg-gradient-to-r ${vibe.color} shadow-lg` : 'bg-white/10 hover:bg-white/20'}`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{vibe.emoji}</span>
+                <div>
+                  <div className="text-white font-semibold">{vibe.label}</div>
+                  <p className="text-white/60 text-xs">{vibe.desc}</p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+
+  // Friend Selection Modal
+  const FriendModal = () => (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden"
+      >
+        <div className="p-4 border-b border-white/20 flex justify-between items-center">
+          <h3 className="text-white font-bold text-lg">Choose a little friend 🧸</h3>
+          <button onClick={closeModal} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 space-y-3">
+          {friendOptions.map((friend) => (
+            <button
+              key={friend.value}
+              onClick={() => {
+                setFormData({ ...formData, friend: friend.value });
+                closeModal();
+              }}
+              className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${formData.friend === friend.value ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
+            >
+              <img src={friend.image} alt={friend.label} className="w-12 h-12 object-contain" />
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-1">
+                  <span className="text-xl">{friend.emoji}</span>
+                  <span className="text-white font-semibold">{friend.label}</span>
+                </div>
+                <p className="text-white/60 text-xs">{friend.desc}</p>
+              </div>
+              {formData.friend === friend.value && <span className="text-pink-400 text-xl">✓</span>}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+
+  // Letter Editor Modal
+  const LetterModal = () => (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
+      >
+        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-blue-900/95">
+          <h3 className="text-white font-bold text-lg">Edit your letter 💌</h3>
+          <button onClick={closeModal} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 overflow-y-auto">
+          <div className="bg-white/10 rounded-xl p-4 mb-4">
+            <p className="text-white/60 text-xs mb-2">Preview</p>
+            <div className="bg-white/5 rounded-lg p-3">
+              <p className="text-white/80 text-sm italic">
+                {letterText || formData.letter || `Dear ${formData.name || 'Friend'},`}
               </p>
             </div>
           </div>
+          
+          <div className="bg-white/10 rounded-xl p-4">
+            <label className="text-white/80 text-sm mb-2 block">Write your heartfelt message:</label>
+            <textarea
+              value={letterText || formData.letter || `Dear ${formData.name || 'Friend'},\n\nHappy Birthday! 🎂\n\nYou mean the world to me. Every moment with you is special, and I wanted to create something unique just for you.\n\nThis surprise is made with lots of love and care. I hope it brings a smile to your face!\n\nWith all my love,\n❤️`}
+              onChange={(e) => setLetterText(e.target.value)}
+              rows={10}
+              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              placeholder="Write your special message here..."
+            />
+          </div>
+          
+          <div className="bg-white/10 rounded-xl p-4 mt-4">
+            <p className="text-white/60 text-xs mb-2">💡 Tips for a great letter:</p>
+            <ul className="text-white/50 text-xs space-y-1 list-disc pl-4">
+              <li>Start with a warm greeting</li>
+              <li>Share a favorite memory</li>
+              <li>Express your feelings honestly</li>
+              <li>End with a loving note</li>
+            </ul>
+          </div>
+        </div>
+        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-blue-900/95">
+          <button
+            onClick={() => {
+              setFormData({ ...formData, letter: letterText });
+              closeModal();
+            }}
+            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold"
+          >
+            Save Letter
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
 
-          {/* Form Steps */}
-          <AnimatePresence mode="wait">
+  const PreviewModal = () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-md bg-gradient-to-br from-blue-900 to-purple-900 rounded-3xl overflow-hidden"
+      >
+        <div className="relative bg-black rounded-3xl p-2">
+          <div className="bg-gradient-to-br from-pink-100 to-purple-100 rounded-2xl overflow-hidden">
+            <div className="p-4">
+              <div className="text-center mb-4">
+                <div className="w-20 h-20 mx-auto bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-4xl mb-3">
+                  🎂
+                </div>
+                <h3 className="text-lg font-bold text-gray-800">Happy Birthday, {formData.name || 'Friend'}!</h3>
+                <p className="text-sm text-gray-600">Get ready for a magical surprise! ✨</p>
+              </div>
+
+              <div className="bg-white/50 rounded-xl p-4 mb-4">
+                <div className="text-center">
+                  <div className="text-2xl mb-2">🎬</div>
+                  <p className="text-sm text-gray-700">Preview of your surprise</p>
+                  <div className="mt-2 h-1 bg-gray-300 rounded-full overflow-hidden">
+                    <div className="w-1/2 h-full bg-pink-500 rounded-full" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-4">
+                <p className="text-sm font-semibold text-gray-700 text-center">Pick a style — this is how it will look</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setSelectedStyle('classic')}
+                    className={`p-3 rounded-xl transition-all ${selectedStyle === 'classic' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 'bg-white/50 text-gray-700'}`}
+                  >
+                    <div className="text-xl mb-1">✨ 💜 ✨</div>
+                    <div className="text-sm font-semibold">Classic</div>
+                    <div className="text-xs">Magical & Cinematic</div>
+                  </button>
+                  <button
+                    onClick={() => setSelectedStyle('cute')}
+                    className={`p-3 rounded-xl transition-all ${selectedStyle === 'cute' ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg' : 'bg-white/50 text-gray-700'}`}
+                  >
+                    <div className="text-xl mb-1">♥ ♡ ❤</div>
+                    <div className="text-sm font-semibold">Cute & Sweet</div>
+                    <div className="text-xs">Playful & Pink</div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3 mb-4">
+                <div className="bg-white/30 rounded-xl p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-600 line-through">₹499</span>
+                    <span className="text-2xl font-bold text-pink-600">₹199</span>
+                    <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">60% OFF</span>
+                  </div>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={uploading}
+                    className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50"
+                  >
+                    {uploading ? 'Creating...' : 'Get this at ₹199'}
+                  </button>
+                  <div className="mt-2 text-center text-xs text-gray-600">
+                    ✓ Secure payment via Razorpay<br />
+                    ⚡ Instant delivery after payment
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setShowPreview(false)}
+          className="absolute top-4 right-4 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg"
+        >
+          ✕
+        </button>
+      </motion.div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen py-8 px-4 relative overflow-hidden bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900">
+      <StarField />
+
+      <div className="container mx-auto max-w-md relative z-10">
+        <div className="text-center mb-8">
+          <div className="text-5xl mb-3 animate-bounce">🎂</div>
+          <h1 className="text-2xl font-bold text-white">Create a Birthday Surprise</h1>
+          <p className="text-sm text-purple-200">Make someone's day extra special! ✨</p>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {step === 1 && (
             <motion.div
-              key={step}
+              key="step1"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-2xl p-6 md:p-8 border border-white/50 dark:border-white/10 shadow-2xl"
+              className="space-y-4"
             >
-              {step === 1 && (
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
-                    <span>💝</span> Basic Information
-                  </h2>
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                <label className="block text-white mb-2 font-semibold">
+                  Whose birthday is it? <span className="text-pink-300">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  placeholder="Enter name"
+                />
+              </div>
 
-                  <div className="space-y-5">
-                    <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
-                        Surprise Title <span className="text-pink-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white placeholder-gray-500"
-                        placeholder="e.g., Happy Birthday My Love!"
-                      />
-                    </div>
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                <label className="block text-white mb-2 font-semibold">
+                  When is the special day? <span className="text-pink-300">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.unlockDate}
+                  onChange={(e) => setFormData({ ...formData, unlockDate: e.target.value })}
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 mb-3"
+                />
+                <input
+                  type="time"
+                  value={formData.unlockTime}
+                  onChange={(e) => setFormData({ ...formData, unlockTime: e.target.value })}
+                  className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                />
+              </div>
 
-                    <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
-                        Occasion
-                      </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {occasions.map((occ) => (
-                          <motion.button
-                            key={occ.value}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, occasion: occ.value })}
-                            className={`px-4 py-2 rounded-xl transition-all ${formData.occasion === occ.value
-                              ? `bg-gradient-to-r ${occ.color} text-white shadow-lg`
-                              : 'bg-white/50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 border border-pink-300 dark:border-pink-500/30'
-                              }`}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <span className="text-lg mr-2">{occ.emoji}</span>
-                            <span className="text-sm">{occ.label}</span>
-                          </motion.button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
-                        Unlock Date & Time <span className="text-pink-500">*</span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={formData.unlockDate}
-                        onChange={(e) => setFormData({ ...formData, unlockDate: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
-                        Secret Message <span className="text-pink-500">*</span>
-                      </label>
-                      <textarea
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white placeholder-gray-500"
-                        rows="4"
-                        placeholder="Write a heartfelt message that will appear in the surprise..."
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id="hasPassword"
-                        checked={formData.hasPassword}
-                        onChange={(e) => setFormData({ ...formData, hasPassword: e.target.checked })}
-                        className="w-5 h-5 rounded border-pink-300 text-pink-500 focus:ring-pink-500"
-                      />
-                      <label htmlFor="hasPassword" className="text-gray-700 dark:text-gray-300 font-semibold">
-                        Add password protection 🔒
-                      </label>
-                    </div>
-
-                    {formData.hasPassword && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-                        <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
-                          Secret Password
-                        </label>
-                        <input
-                          type="password"
-                          value={formData.password}
-                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                          className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white"
-                          placeholder="Set a secret password"
-                        />
-                      </motion.div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {step === 2 && (
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
-                    <span>📸</span> Add Media
-                  </h2>
-
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
-                        Photos
-                      </label>
-                      <div
-                        {...getRootProps()}
-                        className={`border-2 border-dashed rounded-xl p-6 md:p-8 text-center cursor-pointer transition-all ${isDragActive
-                          ? 'border-pink-500 bg-pink-50/50 dark:bg-pink-900/20'
-                          : 'border-pink-300 dark:border-pink-500/30 hover:border-pink-500'
-                          }`}
-                      >
-                        <input {...getInputProps()} />
-                        <div className="text-4xl mb-2">📷</div>
-                        <p className="text-gray-700 dark:text-gray-300">
-                          {isDragActive ? 'Drop your photos here' : 'Drag & drop photos here, or click to select'}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                          Supports: JPG, PNG, GIF (Max 10 images)
-                        </p>
-                      </div>
-
-                      {previewImages.length > 0 && (
-                        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {previewImages.map((url, idx) => (
-                            <motion.div
-                              key={idx}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              className="relative group"
-                            >
-                              <img
-                                src={url}
-                                alt={`Preview ${idx + 1}`}
-                                className="w-full h-24 md:h-32 object-cover rounded-lg"
-                              />
-                              <button
-                                onClick={() => setFormData(prev => ({
-                                  ...prev,
-                                  images: prev.images.filter((_, i) => i !== idx)
-                                }))}
-                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                ×
-                              </button>
-                            </motion.div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
-                        Background Music 🎵
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="audio/*"
-                          onChange={(e) => setFormData({ ...formData, music: e.target.files[0] })}
-                          className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
-                        />
-                        {formData.music && (
-                          <div className="mt-2 text-sm text-green-600 dark:text-green-400">
-                            ✓ {formData.music.name} selected
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 font-semibold">
-                        Video Message 🎬
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="video/*"
-                          onChange={(e) => setFormData({ ...formData, video: e.target.files[0] })}
-                          className="w-full px-4 py-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all text-gray-800 dark:text-white file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
-                        />
-                        {formData.video && (
-                          <div className="mt-2 text-sm text-green-600 dark:text-green-400">
-                            ✓ {formData.video.name} selected
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
-                    <span>🎮</span> Interactive Elements
-                  </h2>
-
-                  <div className="space-y-8">
-                    {/* Quiz Section */}
-                    <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <label className="text-gray-700 dark:text-gray-300 font-semibold">
-                          Quiz Questions 📝
-                        </label>
-                        <motion.button
-                          onClick={() => setFormData(prev => ({
-                            ...prev,
-                            quiz: [...prev.quiz, { text: '', options: ['', '', '', ''], correct: 0 }]
-                          }))}
-                          className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg text-sm font-semibold shadow-lg"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          + Add Question
-                        </motion.button>
-                      </div>
-
-                      <div className="space-y-4">
-                        {formData.quiz.map((q, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white/30 dark:bg-gray-900/30 rounded-xl p-4 border border-pink-200 dark:border-pink-500/20"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <h3 className="text-gray-800 dark:text-white font-semibold">Question {idx + 1}</h3>
-                              <button
-                                onClick={() => {
-                                  const newQuiz = [...formData.quiz];
-                                  newQuiz.splice(idx, 1);
-                                  setFormData({ ...formData, quiz: newQuiz });
-                                }}
-                                className="text-red-500 hover:text-red-600"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                            <input
-                              type="text"
-                              placeholder="Enter your question"
-                              value={q.text}
-                              onChange={(e) => {
-                                const newQuiz = [...formData.quiz];
-                                newQuiz[idx].text = e.target.value;
-                                setFormData({ ...formData, quiz: newQuiz });
-                              }}
-                              className="w-full px-4 py-2 mb-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white"
-                            />
-                            {q.options.map((opt, optIdx) => (
-                              <input
-                                key={optIdx}
-                                type="text"
-                                placeholder={`Option ${optIdx + 1}`}
-                                value={opt}
-                                onChange={(e) => {
-                                  const newQuiz = [...formData.quiz];
-                                  newQuiz[idx].options[optIdx] = e.target.value;
-                                  setFormData({ ...formData, quiz: newQuiz });
-                                }}
-                                className="w-full px-4 py-2 mb-2 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white"
-                              />
-                            ))}
-                            <select
-                              value={q.correct}
-                              onChange={(e) => {
-                                const newQuiz = [...formData.quiz];
-                                newQuiz[idx].correct = parseInt(e.target.value);
-                                setFormData({ ...formData, quiz: newQuiz });
-                              }}
-                              className="w-full px-4 py-2 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white"
-                            >
-                              {q.options.map((_, optIdx) => (
-                                <option key={optIdx} value={optIdx}>
-                                  Correct Answer: Option {optIdx + 1}
-                                </option>
-                              ))}
-                            </select>
-                          </motion.div>
-                        ))}
-                      </div>
-
-                      {formData.quiz.length === 0 && (
-                        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-                          <div className="text-4xl mb-2">📝</div>
-                          <p>No quiz questions added yet</p>
-                          <p className="text-sm">Click "Add Question" to create a fun quiz!</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* NEW: Memories/Timeline Section */}
-                    <div className="border-t border-pink-200 dark:border-pink-500/20 pt-6">
-                      <div className="flex justify-between items-center mb-4">
-                        <label className="text-gray-700 dark:text-gray-300 font-semibold">
-                          Our Story Memories 📖
-                        </label>
-                        <motion.button
-                          onClick={() => setFormData(prev => ({
-                            ...prev,
-                            memories: [...prev.memories, {
-                              title: '',
-                              caption: '',
-                              date: '',
-                              image: null,
-                              imagePreview: null
-                            }]
-                          }))}
-                          className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg text-sm font-semibold shadow-lg"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          + Add Memory
-                        </motion.button>
-                      </div>
-
-                      <div className="space-y-4">
-                        {formData.memories.map((memory, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white/30 dark:bg-gray-900/30 rounded-xl p-4 border border-pink-200 dark:border-pink-500/20"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <h3 className="text-gray-800 dark:text-white font-semibold">Memory {idx + 1}</h3>
-                              <button
-                                onClick={() => {
-                                  const newMemories = [...formData.memories];
-                                  newMemories.splice(idx, 1);
-                                  setFormData({ ...formData, memories: newMemories });
-                                }}
-                                className="text-red-500 hover:text-red-600"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-
-                            {/* Memory Title */}
-                            <input
-                              type="text"
-                              placeholder="Title (e.g., Our First Date)"
-                              value={memory.title}
-                              onChange={(e) => {
-                                const newMemories = [...formData.memories];
-                                newMemories[idx].title = e.target.value;
-                                setFormData({ ...formData, memories: newMemories });
-                              }}
-                              className="w-full px-4 py-2 mb-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white placeholder-gray-500 text-sm"
-                              // placeholder="Enter a title..."
-                            />
-
-                            {/* Memory Description */}
-                            <textarea
-                              placeholder="Write about this beautiful memory..."
-                              value={memory.caption}
-                              onChange={(e) => {
-                                const newMemories = [...formData.memories];
-                                newMemories[idx].caption = e.target.value;
-                                setFormData({ ...formData, memories: newMemories });
-                              }}
-                              rows="3"
-                              className="w-full px-4 py-2 mb-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white placeholder-gray-500 text-sm"
-                              // placeholder="Share your special memory..."
-                            />
-
-                            {/* Memory Date */}
-                            <input
-                              type="date"
-                              value={memory.date}
-                              onChange={(e) => {
-                                const newMemories = [...formData.memories];
-                                newMemories[idx].date = e.target.value;
-                                setFormData({ ...formData, memories: newMemories });
-                              }}
-                              className="w-full px-4 py-2 mb-3 bg-white/50 dark:bg-gray-900/50 border border-pink-300 dark:border-pink-500/30 rounded-lg focus:outline-none focus:border-pink-500 text-gray-800 dark:text-white text-sm"
-                            />
-
-                            {/* Memory Image Upload */}
-                            <div className="mt-2">
-                              <label className="block text-gray-600 dark:text-gray-400 text-sm mb-2">
-                                Memory Image (optional)
-                              </label>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files[0];
-                                  if (file) {
-                                    const newMemories = [...formData.memories];
-                                    newMemories[idx].image = file;
-                                    newMemories[idx].imagePreview = URL.createObjectURL(file);
-                                    setFormData({ ...formData, memories: newMemories });
-                                  }
-                                }}
-                                className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"
-                              />
-
-                              {/* Image Preview */}
-                              {memory.imagePreview && (
-                                <div className="mt-2 relative inline-block">
-                                  <img
-                                    src={memory.imagePreview}
-                                    alt="Preview"
-                                    className="w-20 h-20 object-cover rounded-lg"
-                                  />
-                                  <button
-                                    onClick={() => {
-                                      const newMemories = [...formData.memories];
-                                      newMemories[idx].image = null;
-                                      newMemories[idx].imagePreview = null;
-                                      setFormData({ ...formData, memories: newMemories });
-                                    }}
-                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-
-                      {formData.memories.length === 0 && (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                          <div className="text-4xl mb-2">📖</div>
-                          <p>No memories added yet</p>
-                          <p className="text-sm">Click "Add Memory" to start your beautiful story timeline!</p>
-                        </div>
-                      )}
-
-                      {/* Preview of timeline */}
-                      {formData.memories.length > 0 && (
-                        <div className="mt-4 p-4 bg-pink-50/50 dark:bg-pink-900/20 rounded-lg">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                            <span>✨</span>
-                            You have {formData.memories.length} beautiful memory
-                            {formData.memories.length !== 1 ? 'ies' : ''} that will appear in your story timeline
-                            <span>✨</span>
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {step === 4 && (
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
-                    <span>✨</span> Preview & Publish
-                  </h2>
-
-                  <div className="space-y-6">
-                    <div className="bg-white/30 dark:bg-gray-900/30 rounded-xl p-6">
-                      <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                        <span>📋</span> Surprise Summary
-                      </h3>
-                      <div className="space-y-3">
-                        <div className="flex flex-wrap justify-between py-2 border-b border-pink-200 dark:border-pink-500/20">
-                          <span className="text-gray-600 dark:text-gray-400">Title:</span>
-                          <span className="text-gray-800 dark:text-white font-semibold">{formData.title || 'Not set'}</span>
-                        </div>
-                        <div className="flex flex-wrap justify-between py-2 border-b border-pink-200 dark:border-pink-500/20">
-                          <span className="text-gray-600 dark:text-gray-400">Occasion:</span>
-                          <span className="text-gray-800 dark:text-white font-semibold capitalize">{formData.occasion}</span>
-                        </div>
-                        <div className="flex flex-wrap justify-between py-2 border-b border-pink-200 dark:border-pink-500/20">
-                          <span className="text-gray-600 dark:text-gray-400">Unlock Date:</span>
-                          <span className="text-gray-800 dark:text-white font-semibold">
-                            {formData.unlockDate ? new Date(formData.unlockDate).toLocaleString() : 'Not set'}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap justify-between py-2 border-b border-pink-200 dark:border-pink-500/20">
-                          <span className="text-gray-600 dark:text-gray-400">Photos:</span>
-                          <span className="text-gray-800 dark:text-white font-semibold">{formData.images.length} images</span>
-                        </div>
-                        <div className="flex flex-wrap justify-between py-2 border-b border-pink-200 dark:border-pink-500/20">
-                          <span className="text-gray-600 dark:text-gray-400">Music:</span>
-                          <span className="text-gray-800 dark:text-white font-semibold">{formData.music ? '✓ Added' : 'Not added'}</span>
-                        </div>
-                        <div className="flex flex-wrap justify-between py-2 border-b border-pink-200 dark:border-pink-500/20">
-                          <span className="text-gray-600 dark:text-gray-400">Video:</span>
-                          <span className="text-gray-800 dark:text-white font-semibold">{formData.video ? '✓ Added' : 'Not added'}</span>
-                        </div>
-                        <div className="flex flex-wrap justify-between py-2 border-b border-pink-200 dark:border-pink-500/20">
-                          <span className="text-gray-600 dark:text-gray-400">Quiz Questions:</span>
-                          <span className="text-gray-800 dark:text-white font-semibold">{formData.quiz.length} questions</span>
-                        </div>
-                        <div className="flex flex-wrap justify-between py-2 border-b border-pink-200 dark:border-pink-500/20">
-                          <span className="text-gray-600 dark:text-gray-400">Memories:</span>
-                          <span className="text-gray-800 dark:text-white font-semibold">{formData.memories.length} memories</span>
-                        </div>
-                        <div className="flex flex-wrap justify-between py-2">
-                          <span className="text-gray-600 dark:text-gray-400">Password Protected:</span>
-                          <span className="text-gray-800 dark:text-white font-semibold">{formData.hasPassword ? '✓ Yes' : 'No'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl p-6 text-white text-center">
-                      <div className="text-3xl mb-2">🎉</div>
-                      <p className="text-lg font-semibold mb-2">Ready to Share the Love?</p>
-                      <p className="text-sm opacity-90">Your surprise will be available at the scheduled time</p>
-                    </div>
-
-                    <motion.button
-                      onClick={handleSubmit}
-                      disabled={uploading}
-                      className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-pink-500/25 transition-all disabled:opacity-50"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {uploading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Creating Your Surprise...
-                        </span>
-                      ) : (
-                        'Publish Surprise 💕'
-                      )}
-                    </motion.button>
-                  </div>
-                </div>
-              )}
+              <button
+                onClick={() => setStep(2)}
+                disabled={!formData.name || !formData.unlockDate}
+                className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg disabled:opacity-50 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Continue →
+              </button>
             </motion.div>
-          </AnimatePresence>
+          )}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between mt-6 md:mt-8 gap-4">
-            {step > 1 && (
-              <motion.button
-                onClick={() => setStep(step - 1)}
-                className="flex-1 px-6 py-3 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm text-gray-700 dark:text-white rounded-xl font-semibold border border-pink-300 dark:border-pink-500/30 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                ← Back
-              </motion.button>
-            )}
-            {step < 4 && (
-              <motion.button
-                onClick={() => setStep(step + 1)}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-pink-500/25 transition-all"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Next →
-              </motion.button>
-            )}
-          </div>
-        </motion.div>
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              className="space-y-4 pb-20"
+            >
+              {/* Cake Selection */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-white font-semibold">Cake 🍰</label>
+                  <button
+                    onClick={() => openModal('cake')}
+                    className="text-sm text-pink-300 hover:text-pink-200"
+                  >
+                    Change
+                  </button>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
+                  <span className="text-3xl">{cakeOptions.find(c => c.value === formData.cake)?.emoji}</span>
+                  <span className="text-white">{formData.cake}</span>
+                </div>
+              </div>
+
+              {/* Bond Selection */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-white font-semibold">Bond 💗</label>
+                  <button
+                    onClick={() => openModal('bond')}
+                    className="text-sm text-pink-300 hover:text-pink-200"
+                  >
+                    Change
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {formData.bond.map((bond) => (
+                    <span key={bond} className="px-3 py-1 bg-white/10 rounded-full text-white text-sm">
+                      {bondOptions.find(b => b.value === bond)?.emoji} {bond}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Vibe Selection */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-white font-semibold">Vibe ✨</label>
+                  <button
+                    onClick={() => openModal('vibe')}
+                    className="text-sm text-pink-300 hover:text-pink-200"
+                  >
+                    Change
+                  </button>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
+                  <span className="text-2xl">{vibeOptions.find(v => v.value === formData.vibe)?.emoji}</span>
+                  <span className="text-white">{formData.vibe}</span>
+                </div>
+              </div>
+
+              {/* Friend Selection */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-white font-semibold">Little Friend 🧸</label>
+                  <button
+                    onClick={() => openModal('friend')}
+                    className="text-sm text-pink-300 hover:text-pink-200"
+                  >
+                    Change
+                  </button>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
+                  <span className="text-2xl">{friendOptions.find(f => f.value === formData.friend)?.emoji}</span>
+                  <span className="text-white">{formData.friend}</span>
+                </div>
+              </div>
+
+              {/* Letter */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="text-white font-semibold">Letter 💌</label>
+                  <button
+                    onClick={() => openModal('letter')}
+                    className="text-sm text-pink-300 hover:text-pink-200"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <div className="p-3 bg-white/10 rounded-xl min-h-[80px]">
+                  <p className="text-white/80 text-sm line-clamp-3">
+                    {letterText || formData.letter || `Dear ${formData.name || 'Friend'},`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Photos Upload */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <label className="block text-white mb-2 font-semibold">
+                  Upload Photos 📸 <span className="text-pink-300">*</span>
+                </label>
+                <div
+                  {...getRootProps()}
+                  className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${isDragActive ? 'border-pink-500 bg-pink-500/20' : 'border-white/30 hover:border-pink-500'}`}
+                >
+                  <input {...getInputProps()} />
+                  <div className="text-3xl mb-1">📷</div>
+                  <p className="text-white/70 text-sm">Drag & drop or click to upload</p>
+                  <p className="text-white/50 text-xs">Max 5 photos</p>
+                </div>
+                {previewImages.length > 0 && (
+                  <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+                    {previewImages.map((url, idx) => (
+                      <div key={idx} className="relative flex-shrink-0">
+                        <img src={url} alt="Preview" className="w-16 h-16 object-cover rounded-lg" />
+                        <button
+                          onClick={() => setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Music & Video Upload */}
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <label className="block text-white mb-2 font-semibold">Background Music 🎵</label>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={(e) => setFormData({ ...formData, music: e.target.files[0] })}
+                  className="w-full text-white/70 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-pink-500 file:text-white"
+                />
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
+                <label className="block text-white mb-2 font-semibold">Video Message 🎬</label>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) => setFormData({ ...formData, video: e.target.files[0] })}
+                  className="w-full text-white/70 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-pink-500 file:text-white"
+                />
+              </div>
+
+              <div className="flex gap-3 sticky bottom-4">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex-1 py-3 bg-white/20 text-white rounded-xl font-semibold"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={() => setShowPreview(true)}
+                  className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg"
+                >
+                  See Preview →
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {activeModal === 'cake' && <CakeModal />}
+        {activeModal === 'bond' && <BondModal />}
+        {activeModal === 'vibe' && <VibeModal />}
+        {activeModal === 'friend' && <FriendModal />}
+        {activeModal === 'letter' && <LetterModal />}
+        {showPreview && <PreviewModal />}
+      </AnimatePresence>
     </div>
   );
 };
 
-export default CreateSurprisePage;
+export default CreateSurprisePageNew;
