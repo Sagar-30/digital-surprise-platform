@@ -1,17 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Dancing+Script:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Add to index.css */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Dancing+Script:wght@400;500;600;700&display=swap');
 
-.font-poppins {
-  font-family: 'Poppins', sans-serif;
-}
-
-.font-dancing {
-  font-family: 'Dancing Script', cursive;
-}
 @layer base {
   body {
     @apply bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen;
@@ -80,3 +72,9 @@
   @apply transition-colors duration-200;
 }
 
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+.font-dancing {
+  font-family: 'Dancing Script', cursive;
+}

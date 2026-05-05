@@ -9,45 +9,61 @@ const useSurpriseStore = create((set, get) => ({
   error: null,
   
   createSurprise: async (data) => {
-  set({ isLoading: true, error: null });
-  try {
-    const currentUser = auth.currentUser;
-    
-    // Check if user is logged in
-    if (!currentUser) {
-      throw new Error('You must be logged in to create a surprise');
+    set({ isLoading: true, error: null });
+    try {
+      // unique ID
+      const id = Date.now().toString();
+      
+      // Create a clean object without undefined values
+      const surpriseData = {
+        id,
+        createdAt: new Date().toISOString(),
+        status: 'pending_payment', 
+        ...data
+      };
+      
+      // Removing undefined values
+      Object.keys(surpriseData).forEach(key => {
+        if (surpriseData[key] === undefined) {
+          delete surpriseData[key];
+        }
+      });
+      
+      console.log('Surprise data being saved:', surpriseData);
+      
+      await setDoc(doc(db, 'surprises', id), surpriseData);
+      set({ currentSurprise: surpriseData, isLoading: false });
+      return id;
+    } catch (error) {
+      console.error('Create surprise error:', error);
+      set({ error: error.message, isLoading: false });
+      throw error;
     }
-    
-    const id = Date.now().toString();
-    
-    // Create a clean object without undefined values
-    const surpriseData = {
-      id,
-      userId: currentUser.uid,
-      userEmail: currentUser.email,
-      userName: currentUser.displayName || currentUser.email,
-      createdAt: new Date().toISOString(),
-      ...data // Spread the cleaned data
-    };
-    
-    // Remove any undefined values again (safety check)
-    Object.keys(surpriseData).forEach(key => {
-      if (surpriseData[key] === undefined) {
-        delete surpriseData[key];
+  },
+  
+  updatePaymentStatus: async (id, paymentStatus, paymentDetails) => {
+    set({ isLoading: true });
+    try {
+      const docRef = doc(db, 'surprises', id);
+      const updates = {
+        paymentStatus: paymentStatus,
+        paymentDetails: paymentDetails,
+        updatedAt: new Date().toISOString()
+      };
+      
+      if (paymentStatus === 'completed') {
+        updates.status = 'active';
       }
-    });
-    
-    console.log('Final surprise data being saved:', surpriseData);
-    
-    await setDoc(doc(db, 'surprises', id), surpriseData);
-    set({ currentSurprise: surpriseData, isLoading: false });
-    return id;
-  } catch (error) {
-    console.error('Create surprise error:', error);
-    set({ error: error.message, isLoading: false });
-    throw error;
-  }
-},
+      
+      await updateDoc(docRef, updates);
+      set({ isLoading: false });
+      return true;
+    } catch (error) {
+      console.error('Update payment error:', error);
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
   
   getSurprise: async (id) => {
     set({ isLoading: true, error: null });
@@ -101,7 +117,47 @@ const useSurpriseStore = create((set, get) => ({
       throw error;
     }
   },
-  
+
+  getAllSurprises: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const currentUser = auth.currentUser;
+      
+      // Only admin allow to view all surprises
+      if (!currentUser || currentUser.email !== 'admin@example.com') {
+        console.log('Unauthorized access');
+        set({ isLoading: false });
+        return [];
+      }
+      
+      const surprisesRef = collection(db, 'surprises');
+      const querySnapshot = await getDocs(surprisesRef);
+      
+      const surprises = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        surprises.push({ 
+          id: doc.id, 
+          ...data,
+          createdAt: data.createdAt ? new Date(data.createdAt) : new Date()
+        });
+      });
+      
+      surprises.sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+        return dateB - dateA;
+      });
+      
+      set({ isLoading: false });
+      return surprises;
+    } catch (error) {
+      console.error('Error fetching surprises:', error);
+      set({ error: error.message, isLoading: false });
+      return [];
+    }
+  },
+
   getUserSurprises: async () => {
     set({ isLoading: true, error: null });
     try {

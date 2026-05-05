@@ -5,6 +5,301 @@ import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import useSurpriseStore from '../store/surpriseStore.jsx';
 
+// ============= SEPARATE MODAL COMPONENTS =============
+
+// Cake Selection Modal
+const CakeModal = ({ isOpen, onClose, selectedCake, onSelectCake }) => {
+  const cakeOptions = [
+    { value: 'Chocolate Fantasy', emoji: '🍫', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&h=80&fit=crop', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
+    { value: 'Princess Double Storey', emoji: '👑', image: 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=80&h=80&fit=crop', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
+    { value: 'Galaxy Classic', emoji: '🌌', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
+    { value: 'Strawberry Princess', emoji: '🍓', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={onClose}>
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-gray-900/95">
+          <h3 className="text-white font-semibold text-lg font-poppins">Choose a cake 🍰</h3>
+          <button onClick={onClose} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 overflow-y-auto space-y-3">
+          {cakeOptions.map((cake) => (
+            <button
+              key={cake.value}
+              onClick={() => {
+                onSelectCake(cake.value);
+                onClose();
+              }}
+              className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${selectedCake === cake.value ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
+            >
+              <img src={cake.image} alt={cake.label} className="w-14 h-14 rounded-lg object-cover" />
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-1">
+                  <span className="text-xl">{cake.emoji}</span>
+                  <span className="text-white font-medium font-poppins">{cake.label}</span>
+                </div>
+                <p className="text-white/60 text-xs">{cake.desc}</p>
+              </div>
+              {selectedCake === cake.value && <span className="text-pink-400 text-xl">✓</span>}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Bond Selection Modal
+const BondModal = ({ isOpen, onClose, selectedBonds, onBondToggle, onSave }) => {
+  const bondOptions = [
+    { value: 'Sweet', emoji: '💗', label: 'Sweet', desc: 'Always caring and kind' },
+    { value: 'Loyal', emoji: '🤝', label: 'Loyal', desc: 'Stands by your side always' },
+    { value: 'My rock', emoji: '🪨', label: 'My rock', desc: 'Strong and dependable' },
+    { value: 'Bestie', emoji: '⭐', label: 'Bestie', desc: 'Partner in crime' },
+    { value: 'Always there', emoji: '🤍', label: 'Always there', desc: 'Never let you down' },
+    { value: 'Kind heart', emoji: '😊', label: 'Kind heart', desc: 'Pure and gentle soul' }
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={onClose}>
+      <div className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-gray-900/95">
+          <div>
+            <h3 className="text-white font-semibold text-lg font-poppins">What describes your bond? 💗</h3>
+            <p className="text-pink-300 text-xs mt-1">Choose any 3 ({selectedBonds.length}/3)</p>
+          </div>
+          <button onClick={onClose} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 overflow-y-auto">
+          <div className="grid grid-cols-2 gap-3">
+            {bondOptions.map((bond) => (
+              <button
+                key={bond.value}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBondToggle(bond.value);
+                }}
+                className={`p-3 rounded-xl text-left transition-all ${selectedBonds.includes(bond.value) ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-2xl">{bond.emoji}</span>
+                  <span className="text-white font-medium font-poppins">{bond.label}</span>
+                </div>
+                <p className="text-white/50 text-xs">{bond.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-gray-900/95">
+          <button onClick={onSave} className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold font-poppins">
+            Save Selection ({selectedBonds.length}/3)
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Vibe Selection Modal
+const VibeModal = ({ isOpen, onClose, selectedVibe, onSelectVibe }) => {
+  const vibeOptions = [
+    { value: 'Sweet & Warm', emoji: '🎀', label: 'Sweet & Warm', color: 'from-pink-400 to-rose-400', desc: 'Cozy and heartwarming' },
+    { value: 'Fun & Playful', emoji: '😂', label: 'Fun & Playful', color: 'from-yellow-400 to-orange-400', desc: 'Energetic and joyful' },
+    { value: 'Deep Love', emoji: '🔥', label: 'Deep Love', color: 'from-red-400 to-pink-500', desc: 'Passionate and romantic' }
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={onClose}>
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-white/20 flex justify-between items-center">
+          <h3 className="text-white font-semibold text-lg font-poppins">Pick the vibe ✨</h3>
+          <button onClick={onClose} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 space-y-3">
+          {vibeOptions.map((vibe) => (
+            <button
+              key={vibe.value}
+              onClick={() => {
+                onSelectVibe(vibe.value);
+                onClose();
+              }}
+              className={`w-full p-4 rounded-xl text-left transition-all ${selectedVibe === vibe.value ? `bg-gradient-to-r ${vibe.color} shadow-lg` : 'bg-white/10 hover:bg-white/20'}`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{vibe.emoji}</span>
+                <div>
+                  <div className="text-white font-medium font-poppins">{vibe.label}</div>
+                  <p className="text-white/60 text-xs">{vibe.desc}</p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Friend Selection Modal
+const FriendModal = ({ isOpen, onClose, selectedFriend, onSelectFriend }) => {
+  const friendOptions = [
+    { value: 'Bunny', emoji: '🐰', image: 'https://cdn-icons-png.flaticon.com/512/616/616408.png', label: 'Bunny', desc: 'Soft and cuddly companion' },
+    { value: 'Kitty', emoji: '🐱', image: 'https://cdn-icons-png.flaticon.com/512/616/616430.png', label: 'Kitty', desc: 'Playful and curious friend' },
+    { value: 'Teddy', emoji: '🧸', image: 'https://cdn-icons-png.flaticon.com/512/616/616478.png', label: 'Teddy', desc: 'Classic bear hugger' }
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={onClose}>
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-white/20 flex justify-between items-center">
+          <h3 className="text-white font-semibold text-lg font-poppins">Choose a little friend 🧸</h3>
+          <button onClick={onClose} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 space-y-3">
+          {friendOptions.map((friend) => (
+            <button
+              key={friend.value}
+              onClick={() => {
+                onSelectFriend(friend.value);
+                onClose();
+              }}
+              className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${selectedFriend === friend.value ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
+            >
+              <img src={friend.image} alt={friend.label} className="w-12 h-12 object-contain" />
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-1">
+                  <span className="text-xl">{friend.emoji}</span>
+                  <span className="text-white font-medium font-poppins">{friend.label}</span>
+                </div>
+                <p className="text-white/60 text-xs">{friend.desc}</p>
+              </div>
+              {selectedFriend === friend.value && <span className="text-pink-400 text-xl">✓</span>}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Letter Editor Modal
+const LetterModal = ({ isOpen, onClose, initialLetter, userName, onSave }) => {
+  const [tempLetter, setTempLetter] = useState(initialLetter);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTempLetter(initialLetter);
+    }
+  }, [isOpen, initialLetter]);
+
+  const getDefaultLetter = (name) => `Dear ${name || 'Friend'},
+
+Happy Birthday! 🎂
+
+You mean the world to me. Every moment with you is special, and I wanted to create something unique just for you.
+
+This surprise is made with lots of love and care. I hope it brings a smile to your face!
+
+With all my love,
+❤️`;
+
+  if (!isOpen) return null;
+
+  const displayLetter = tempLetter || getDefaultLetter(userName);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md" onClick={onClose}>
+      <motion.div
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-gray-900/95">
+          <h3 className="text-white font-semibold text-lg font-poppins">Edit your letter 💌</h3>
+          <button onClick={onClose} className="text-white text-2xl">✕</button>
+        </div>
+        <div className="p-4 overflow-y-auto">
+          <div className="bg-white/10 rounded-xl p-4 mb-4">
+            <p className="text-white/60 text-xs mb-2">Preview</p>
+            <div className="bg-white/5 rounded-lg p-3 max-h-32 overflow-y-auto">
+              <p className="text-white/80 text-sm italic whitespace-pre-wrap font-poppins">
+                {displayLetter.substring(0, 150)}...
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white/10 rounded-xl p-4">
+            <label className="text-white/80 text-sm mb-2 block font-poppins">Write your heartfelt message:</label>
+            <textarea
+              value={tempLetter}
+              onChange={(e) => setTempLetter(e.target.value)}
+              rows={12}
+              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 font-poppins text-sm"
+              placeholder="Write your special message here..."
+            />
+          </div>
+
+          <div className="bg-white/10 rounded-xl p-4 mt-4">
+            <p className="text-white/60 text-xs mb-2 font-poppins">💡 Tips for a great letter:</p>
+            <ul className="text-white/50 text-xs space-y-1 list-disc pl-4 font-poppins">
+              <li>Start with a warm greeting</li>
+              <li>Share a favorite memory</li>
+              <li>Express your feelings honestly</li>
+              <li>End with a loving note</li>
+            </ul>
+          </div>
+        </div>
+        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-gray-900/95">
+          <button
+            onClick={() => {
+              onSave(tempLetter);
+              onClose();
+            }}
+            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold font-poppins"
+          >
+            Save Letter
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// ============= MAIN COMPONENT =============
+
 const CreateSurprisePageNew = () => {
   const navigate = useNavigate();
   const { createSurprise, uploadFile } = useSurpriseStore();
@@ -12,11 +307,11 @@ const CreateSurprisePageNew = () => {
   const [selectedPlan, setSelectedPlan] = useState('premium');
   const [showPreview, setShowPreview] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState('cute');
+  
+  // Modal states
   const [activeModal, setActiveModal] = useState(null);
   const [tempBondSelection, setTempBondSelection] = useState([]);
-  const [letterText, setLetterText] = useState('');
-  const [isLetterSaved, setIsLetterSaved] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     occasion: 'birthday',
@@ -26,12 +321,35 @@ const CreateSurprisePageNew = () => {
     bond: ['Sweet', 'Loyal', 'My rock'],
     vibe: 'Sweet & Warm',
     friend: 'Kitty',
+    letter: '',
     images: [],
     music: null,
     video: null,
   });
   const [uploading, setUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
+
+  // Default letter template
+  const getDefaultLetter = (name) => `Dear ${name || 'Friend'},
+
+Happy Birthday! 🎂
+
+You mean the world to me. Every moment with you is special, and I wanted to create something unique just for you.
+
+This surprise is made with lots of love and care. I hope it brings a smile to your face!
+
+With all my love,
+❤️`;
+
+  // Initialize default letter when name changes
+  useEffect(() => {
+    if (formData.name && !formData.letter) {
+      setFormData(prev => ({
+        ...prev,
+        letter: getDefaultLetter(prev.name)
+      }));
+    }
+  }, [formData.name]);
 
   // Cake options with images
   const cakeOptions = [
@@ -89,9 +407,6 @@ const CreateSurprisePageNew = () => {
     if (modalName === 'bond') {
       setTempBondSelection([...formData.bond]);
     }
-    if (modalName === 'letter') {
-      setIsLetterSaved(false);
-    }
     setActiveModal(modalName);
   }, [formData.bond]);
 
@@ -99,11 +414,6 @@ const CreateSurprisePageNew = () => {
     setActiveModal(null);
     setTempBondSelection([]);
   }, []);
-
-  const saveBondSelection = useCallback(() => {
-    setFormData(prev => ({ ...prev, bond: tempBondSelection }));
-    closeModal();
-  }, [tempBondSelection, closeModal]);
 
   const handleBondToggle = useCallback((bondValue) => {
     setTempBondSelection(prev => {
@@ -119,10 +429,10 @@ const CreateSurprisePageNew = () => {
     });
   }, []);
 
-  const saveLetter = useCallback(() => {
-    setIsLetterSaved(true);
+  const saveBondSelection = useCallback(() => {
+    setFormData(prev => ({ ...prev, bond: tempBondSelection }));
     closeModal();
-  }, [closeModal]);
+  }, [tempBondSelection, closeModal]);
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.unlockDate) {
@@ -148,20 +458,8 @@ const CreateSurprisePageNew = () => {
         videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
       }
 
-      const defaultLetter = `Dear ${formData.name || 'Friend'},
-
-Happy Birthday! 🎂
-
-You mean the world to me. Every moment with you is special, and I wanted to create something unique just for you.
-
-This surprise is made with lots of love and care. I hope it brings a smile to your face!
-
-With all my love,
-❤️`;
-
       const surpriseData = {
         ...formData,
-        letter: letterText || defaultLetter,
         images: imageUrls,
         music: musicUrl,
         video: videoUrl,
@@ -204,248 +502,14 @@ With all my love,
           }}
         />
       ))}
-      <motion.div
-        className="absolute top-10 right-10 w-16 h-16 bg-yellow-100 rounded-full shadow-2xl"
-        animate={{ scale: [1, 1.05, 1] }}
-        transition={{ duration: 4, repeat: Infinity }}
-      />
-      <div className="absolute top-10 right-10 w-16 h-16 bg-gray-950 rounded-full transform translate-x-3 -translate-y-2" />
+        {/* <motion.div
+          className="absolute top-10 right-10 w-16 h-16 bg-yellow-100 rounded-full shadow-2xl"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 4, repeat: Infinity }}
+        />
+        <div className="absolute top-10 right-10 w-16 h-16 bg-gray-950 rounded-full transform translate-x-3 -translate-y-2" /> */}
     </div>
   ), []);
-
-  // Cake Selection Modal
-  const CakeModal = () => (
-    <div 
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-      onClick={closeModal}
-    >
-      <motion.div
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-gray-900/95">
-          <h3 className="text-white font-semibold text-lg font-poppins">Choose a cake 🍰</h3>
-          <button onClick={closeModal} className="text-white text-2xl">✕</button>
-        </div>
-        <div className="p-4 overflow-y-auto space-y-3">
-          {cakeOptions.map((cake) => (
-            <button
-              key={cake.value}
-              onClick={() => {
-                setFormData(prev => ({ ...prev, cake: cake.value }));
-                closeModal();
-              }}
-              className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${formData.cake === cake.value ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
-            >
-              <img src={cake.image} alt={cake.label} className="w-14 h-14 rounded-lg object-cover" />
-              <div className="flex-1 text-left">
-                <div className="flex items-center gap-1">
-                  <span className="text-xl">{cake.emoji}</span>
-                  <span className="text-white font-medium font-poppins">{cake.label}</span>
-                </div>
-                <p className="text-white/60 text-xs">{cake.desc}</p>
-              </div>
-              {formData.cake === cake.value && <span className="text-pink-400 text-xl">✓</span>}
-            </button>
-          ))}
-        </div>
-      </motion.div>
-    </div>
-  );
-
-  // Bond Selection Modal
-  const BondModal = () => (
-    <div 
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-      onClick={closeModal}
-    >
-      <div className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col">
-        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-gray-900/95">
-          <div>
-            <h3 className="text-white font-semibold text-lg font-poppins">What describes your bond? 💗</h3>
-            <p className="text-pink-300 text-xs mt-1">Choose any 3 ({tempBondSelection.length}/3)</p>
-          </div>
-          <button onClick={closeModal} className="text-white text-2xl">✕</button>
-        </div>
-        <div className="p-4 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-3">
-            {bondOptions.map((bond) => (
-              <button
-                key={bond.value}
-                onClick={() => handleBondToggle(bond.value)}
-                className={`p-3 rounded-xl text-left transition-all ${tempBondSelection.includes(bond.value) ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-2xl">{bond.emoji}</span>
-                  <span className="text-white font-medium font-poppins">{bond.label}</span>
-                </div>
-                <p className="text-white/50 text-xs">{bond.desc}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-gray-900/95">
-          <button
-            onClick={saveBondSelection}
-            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold font-poppins"
-          >
-            Save Selection ({tempBondSelection.length}/3)
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Vibe Selection Modal
-  const VibeModal = () => (
-    <div 
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-      onClick={closeModal}
-    >
-      <motion.div
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-4 border-b border-white/20 flex justify-between items-center">
-          <h3 className="text-white font-semibold text-lg font-poppins">Pick the vibe ✨</h3>
-          <button onClick={closeModal} className="text-white text-2xl">✕</button>
-        </div>
-        <div className="p-4 space-y-3">
-          {vibeOptions.map((vibe) => (
-            <button
-              key={vibe.value}
-              onClick={() => {
-                setFormData(prev => ({ ...prev, vibe: vibe.value }));
-                closeModal();
-              }}
-              className={`w-full p-4 rounded-xl text-left transition-all ${formData.vibe === vibe.value ? `bg-gradient-to-r ${vibe.color} shadow-lg` : 'bg-white/10 hover:bg-white/20'}`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{vibe.emoji}</span>
-                <div>
-                  <div className="text-white font-medium font-poppins">{vibe.label}</div>
-                  <p className="text-white/60 text-xs">{vibe.desc}</p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </motion.div>
-    </div>
-  );
-
-  // Friend Selection Modal
-  const FriendModal = () => (
-    <div 
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-      onClick={closeModal}
-    >
-      <motion.div
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-4 border-b border-white/20 flex justify-between items-center">
-          <h3 className="text-white font-semibold text-lg font-poppins">Choose a little friend 🧸</h3>
-          <button onClick={closeModal} className="text-white text-2xl">✕</button>
-        </div>
-        <div className="p-4 space-y-3">
-          {friendOptions.map((friend) => (
-            <button
-              key={friend.value}
-              onClick={() => {
-                setFormData(prev => ({ ...prev, friend: friend.value }));
-                closeModal();
-              }}
-              className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${formData.friend === friend.value ? 'bg-pink-500/30 border-2 border-pink-500' : 'bg-white/10 hover:bg-white/20'}`}
-            >
-              <img src={friend.image} alt={friend.label} className="w-12 h-12 object-contain" />
-              <div className="flex-1 text-left">
-                <div className="flex items-center gap-1">
-                  <span className="text-xl">{friend.emoji}</span>
-                  <span className="text-white font-medium font-poppins">{friend.label}</span>
-                </div>
-                <p className="text-white/60 text-xs">{friend.desc}</p>
-              </div>
-              {formData.friend === friend.value && <span className="text-pink-400 text-xl">✓</span>}
-            </button>
-          ))}
-        </div>
-      </motion.div>
-    </div>
-  );
-
-  // Letter Editor Modal - Fixed re-render issue
-  const LetterModal = () => (
-    <div 
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/90 backdrop-blur-md"
-      onClick={closeModal}
-    >
-      <motion.div
-        initial={{ y: '100%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '100%', opacity: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-4 border-b border-white/20 flex justify-between items-center sticky top-0 bg-gray-900/95">
-          <h3 className="text-white font-semibold text-lg font-poppins">Edit your letter 💌</h3>
-          <button onClick={closeModal} className="text-white text-2xl">✕</button>
-        </div>
-        <div className="p-4 overflow-y-auto">
-          <div className="bg-white/10 rounded-xl p-4 mb-4">
-            <p className="text-white/60 text-xs mb-2">Preview</p>
-            <div className="bg-white/5 rounded-lg p-3 max-h-32 overflow-y-auto">
-              <p className="text-white/80 text-sm italic whitespace-pre-wrap font-poppins">
-                {letterText || `Dear ${formData.name || 'Friend'},\n\nHappy Birthday! 🎂\n\nYou mean the world to me...`}
-              </p>
-            </div>
-          </div>
-          
-          <div className="bg-white/10 rounded-xl p-4">
-            <label className="text-white/80 text-sm mb-2 block font-poppins">Write your heartfelt message:</label>
-            <textarea
-              value={letterText}
-              onChange={(e) => setLetterText(e.target.value)}
-              rows={12}
-              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 font-poppins text-sm"
-              placeholder="Write your special message here..."
-            />
-          </div>
-          
-          <div className="bg-white/10 rounded-xl p-4 mt-4">
-            <p className="text-white/60 text-xs mb-2 font-poppins">💡 Tips for a great letter:</p>
-            <ul className="text-white/50 text-xs space-y-1 list-disc pl-4 font-poppins">
-              <li>Start with a warm greeting</li>
-              <li>Share a favorite memory</li>
-              <li>Express your feelings honestly</li>
-              <li>End with a loving note</li>
-            </ul>
-          </div>
-        </div>
-        <div className="p-4 border-t border-white/20 sticky bottom-0 bg-gray-900/95">
-          <button
-            onClick={saveLetter}
-            className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold font-poppins"
-          >
-            Save Letter
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
 
   const PreviewModal = () => (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
@@ -603,7 +667,7 @@ With all my love,
               transition={{ duration: 0.3 }}
               className="space-y-4 pb-20"
             >
-              {/* Cake Selection with Image */}
+              {/* Cake Selection */}
               <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20">
                 <div className="flex justify-between items-center mb-3">
                   <label className="text-white font-semibold font-poppins">Cake 🍰</label>
@@ -615,8 +679,8 @@ With all my love,
                   </button>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
-                  <img 
-                    src={cakeOptions.find(c => c.value === formData.cake)?.image} 
+                  <img
+                    src={cakeOptions.find(c => c.value === formData.cake)?.image}
                     alt={formData.cake}
                     className="w-12 h-12 rounded-lg object-cover"
                   />
@@ -680,8 +744,8 @@ With all my love,
                   </button>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-white/10 rounded-xl">
-                  <img 
-                    src={friendOptions.find(f => f.value === formData.friend)?.image} 
+                  <img
+                    src={friendOptions.find(f => f.value === formData.friend)?.image}
                     alt={formData.friend}
                     className="w-10 h-10 object-contain"
                   />
@@ -703,12 +767,12 @@ With all my love,
                     onClick={() => openModal('letter')}
                     className="text-sm text-pink-300 hover:text-pink-200 font-poppins"
                   >
-                    {isLetterSaved || letterText ? 'Edit' : 'Write'}
+                    {formData.letter ? 'Edit' : 'Write'}
                   </button>
                 </div>
                 <div className="p-3 bg-white/10 rounded-xl min-h-[80px]">
                   <p className="text-white/80 text-sm line-clamp-3 font-poppins">
-                    {letterText || `Dear ${formData.name || 'Friend'},`}
+                    {formData.letter ? formData.letter.substring(0, 100) + '...' : `Dear ${formData.name || 'Friend'},`}
                   </p>
                 </div>
               </div>
@@ -784,12 +848,45 @@ With all my love,
         </AnimatePresence>
       </div>
 
+      {/* Modals - Rendered outside the main component flow */}
+      <CakeModal
+        isOpen={activeModal === 'cake'}
+        onClose={closeModal}
+        selectedCake={formData.cake}
+        onSelectCake={(cake) => setFormData(prev => ({ ...prev, cake }))}
+      />
+
+      <BondModal
+        isOpen={activeModal === 'bond'}
+        onClose={closeModal}
+        selectedBonds={tempBondSelection}
+        onBondToggle={handleBondToggle}
+        onSave={saveBondSelection}
+      />
+
+      <VibeModal
+        isOpen={activeModal === 'vibe'}
+        onClose={closeModal}
+        selectedVibe={formData.vibe}
+        onSelectVibe={(vibe) => setFormData(prev => ({ ...prev, vibe }))}
+      />
+
+      <FriendModal
+        isOpen={activeModal === 'friend'}
+        onClose={closeModal}
+        selectedFriend={formData.friend}
+        onSelectFriend={(friend) => setFormData(prev => ({ ...prev, friend }))}
+      />
+
+      <LetterModal
+        isOpen={activeModal === 'letter'}
+        onClose={closeModal}
+        initialLetter={formData.letter}
+        userName={formData.name}
+        onSave={(letter) => setFormData(prev => ({ ...prev, letter }))}
+      />
+
       <AnimatePresence>
-        {activeModal === 'cake' && <CakeModal />}
-        {activeModal === 'bond' && <BondModal />}
-        {activeModal === 'vibe' && <VibeModal />}
-        {activeModal === 'friend' && <FriendModal />}
-        {activeModal === 'letter' && <LetterModal />}
         {showPreview && <PreviewModal />}
       </AnimatePresence>
     </div>
