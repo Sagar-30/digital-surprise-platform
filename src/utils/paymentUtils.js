@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 async function createOrderOnServer(amountInRupees, surpriseId) {
   const isLocal = window.location.hostname === 'localhost';
   const url = isLocal 
-    ? 'http://localhost:5173/.netlify/functions/createOrder'
+    ? 'http://localhost:8888/.netlify/functions/createOrder'
     : '/.netlify/functions/createOrder';
 
   const response = await fetch(url, {
@@ -25,7 +25,7 @@ async function createOrderOnServer(amountInRupees, surpriseId) {
 async function verifyPaymentOnServer(paymentData) {
   const isLocal = window.location.hostname === 'localhost';
   const url = isLocal 
-    ? 'http://localhost:5173/.netlify/functions/verifyPayment'
+    ? 'http://localhost:8888/.netlify/functions/verifyPayment'
     : '/.netlify/functions/verifyPayment';
 
   const response = await fetch(url, {
@@ -78,7 +78,7 @@ export async function initiatePayment(surpriseId, amount = 199) {
       order_id: orderData.orderId,
       name: 'Digital Surprise Box',
       description: 'Create a magical birthday surprise',
-      image: 'https://www.theindiansanta.com/logo.png',
+      image: 'https://splendorous-kitten-8af09b.netlify.app/favicon.svg',
       prefill: {
         name: '',
         email: '',

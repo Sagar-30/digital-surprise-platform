@@ -6,7 +6,7 @@ import CreateSurprisePage from './pages/CreateSurprisePage.jsx';
 import SurpriseViewerPage from './pages/SurpriseViewerPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import SharePage from './pages/SharePage.jsx';
-
+import PaymentSuccessPage from './pages/PaymentSuccessPage.jsx';
 //test
 import CreateSurprisePageNew from './pages/CreateSurprisePage_Old.jsx';
 
@@ -20,6 +20,7 @@ function App() {
         <Route path="/create" element={<CreateSurprisePageNew />} />
         <Route path="/share" element={<SharePage />} />
         <Route path="/surprise/:id" element={<SurpriseViewerPage />} />
+        <Route path="/payment-success/:surpriseId" element={<PaymentSuccessPage />} />
       </Routes>
     </AuthProvider>
   );

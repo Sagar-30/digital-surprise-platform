@@ -1,11 +1,15 @@
 import Razorpay from "razorpay";
 
-const KEY_ID = process.env.RAZORPAY_KEY_ID;
-const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+const KEY_ID = process.env.RAZORPAY_KEY_ID; //rzp_live_Rkjz8D1wX7bNNd
+const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET; //Ib2WVWzNDWPHQd6Vk5rY12HT
 
+// const razorpay = new Razorpay({
+//   key_id: KEY_ID,
+//   key_secret: KEY_SECRET
+// });
 const razorpay = new Razorpay({
-  key_id: KEY_ID,
-  key_secret: KEY_SECRET
+  key_id: "rzp_test_SmAxRtKUhrwEGv",
+  key_secret: "pnd7hZD244O5hoq7ApHeRuZh"
 });
 
 export const handler = async (event) => {
