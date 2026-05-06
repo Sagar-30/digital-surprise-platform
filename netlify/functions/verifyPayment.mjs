@@ -8,7 +8,7 @@ const KEY_SECRET = "Ib2WVWzNDWPHQd6Vk5rY12HT";
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:8888",
-  "https://www.theindiansanta.com"
+  "https://splendorous-kitten-8af09b.netlify.app/"
 ];
 
 export const handler = async (event) => {

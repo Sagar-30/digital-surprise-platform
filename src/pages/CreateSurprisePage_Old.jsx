@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
 import useSurpriseStore from '../store/surpriseStore.jsx';
+import { initiatePayment } from '../utils/paymentUtils.js';
 
 // ============= SEPARATE MODAL COMPONENTS =============
 
@@ -307,7 +308,7 @@ const CreateSurprisePageNew = () => {
   const [selectedPlan, setSelectedPlan] = useState('premium');
   const [showPreview, setShowPreview] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState('cute');
-  
+
   // Modal states
   const [activeModal, setActiveModal] = useState(null);
   const [tempBondSelection, setTempBondSelection] = useState([]);
@@ -434,6 +435,51 @@ With all my love,
     closeModal();
   }, [tempBondSelection, closeModal]);
 
+  // const handleSubmit = async () => {
+  //   if (!formData.name || !formData.unlockDate) {
+  //     toast.error('Please fill in all required fields');
+  //     return;
+  //   }
+
+  //   setUploading(true);
+  //   try {
+  //     const imageUrls = [];
+  //     for (const image of formData.images) {
+  //       const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
+  //       imageUrls.push(url);
+  //     }
+
+  //     let musicUrl = null;
+  //     if (formData.music) {
+  //       musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
+  //     }
+
+  //     let videoUrl = null;
+  //     if (formData.video) {
+  //       videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
+  //     }
+
+  //     const surpriseData = {
+  //       ...formData,
+  //       images: imageUrls,
+  //       music: musicUrl,
+  //       video: videoUrl,
+  //       unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
+  //       status: 'active',
+  //       createdAt: new Date().toISOString()
+  //     };
+
+  //     const id = await createSurprise(surpriseData);
+  //     toast.success('Surprise created successfully! 🎉');
+  //     navigate(`/payment/${id}?plan=${selectedPlan}&style=${selectedStyle}`);
+  //   } catch (error) {
+  //     toast.error('Failed to create surprise');
+  //     console.error(error);
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
+
   const handleSubmit = async () => {
     if (!formData.name || !formData.unlockDate) {
       toast.error('Please fill in all required fields');
@@ -442,38 +488,58 @@ With all my love,
 
     setUploading(true);
     try {
-      const imageUrls = [];
-      for (const image of formData.images) {
-        const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
-        imageUrls.push(url);
+      // Initiate payment first
+      const paymentResult = await initiatePayment(null, 199);
+
+      if (paymentResult.success) {
+        // Upload all files after payment succeeds
+        const imageUrls = [];
+        for (const image of formData.images) {
+          const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
+          imageUrls.push(url);
+        }
+
+        let musicUrl = null;
+        if (formData.music) {
+          musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
+        }
+
+        let videoUrl = null;
+        if (formData.video) {
+          videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
+        }
+
+        // Prepare surprise data
+        const surpriseData = {
+          name: formData.name,
+          occasion: formData.occasion,
+          unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
+          cake: formData.cake,
+          bond: formData.bond,
+          vibe: formData.vibe,
+          friend: formData.friend,
+          letter: formData.letter,
+          images: imageUrls,
+          music: musicUrl,
+          video: videoUrl,
+          selectedStyle: selectedStyle,
+          status: 'active', // directly active since payment succeeded
+          createdAt: new Date().toISOString(),
+          paymentInfo: paymentResult // store payment details if needed
+        };
+
+        // Create surprise in database
+        const surpriseId = await createSurprise(surpriseData);
+
+        toast.success('Payment successful and surprise created! 🎉');
+        navigate(`/payment-success/${surpriseId}`);
+      } else {
+        toast.error('Payment failed. Please try again.');
+        navigate(`/payment-failed`);
       }
-
-      let musicUrl = null;
-      if (formData.music) {
-        musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
-      }
-
-      let videoUrl = null;
-      if (formData.video) {
-        videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
-      }
-
-      const surpriseData = {
-        ...formData,
-        images: imageUrls,
-        music: musicUrl,
-        video: videoUrl,
-        unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
-        status: 'active',
-        createdAt: new Date().toISOString()
-      };
-
-      const id = await createSurprise(surpriseData);
-      toast.success('Surprise created successfully! 🎉');
-      navigate(`/payment/${id}?plan=${selectedPlan}&style=${selectedStyle}`);
     } catch (error) {
-      toast.error('Failed to create surprise');
-      console.error(error);
+      console.error('Submit error:', error);
+      toast.error('Failed to process: ' + error.message);
     } finally {
       setUploading(false);
     }
@@ -502,7 +568,7 @@ With all my love,
           }}
         />
       ))}
-        {/* <motion.div
+      {/* <motion.div
           className="absolute top-10 right-10 w-16 h-16 bg-yellow-100 rounded-full shadow-2xl"
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 4, repeat: Infinity }}
