@@ -1,7 +1,9 @@
 import Razorpay from "razorpay";
 
-// const KEY_ID = process.env.RAZORPAY_KEY_ID; //rzp_live_Rkjz8D1wX7bNNd
-// const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET; //Ib2WVWzNDWPHQd6Vk5rY12HT
+
+
+const KEY_ID = "rzp_test_SmAxRtKUhrwEGv";
+const KEY_SECRET = "pnd7hZD244O5hoq7ApHeRuZh";
 
 // const razorpay = new Razorpay({
 //   key_id: KEY_ID,
@@ -11,11 +13,6 @@ const razorpay = new Razorpay({
   key_id: "rzp_test_SmAxRtKUhrwEGv",
   key_secret: "pnd7hZD244O5hoq7ApHeRuZh"
 });
-
-// const razorpay = new Razorpay({
-//   key_id: "rzp_live_Rkjz8D1wX7bNNd",
-//   key_secret: "Ib2WVWzNDWPHQd6Vk5rY12HT"
-// });
 
 export const handler = async (event) => {
   // Handle CORS preflight
