@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -329,6 +329,7 @@ const CreateSurprisePageNew = () => {
   });
   const [uploading, setUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
+  const isLetterManuallyEdited = useRef(false);
 
   // Default letter template
   const getDefaultLetter = (name) => `Dear ${name || 'Friend'},
@@ -343,12 +344,35 @@ With all my love,
 ❤️`;
 
   // Initialize default letter when name changes
+  // useEffect(() => {
+  //   console.log("UseEffect:",formData)
+  //   if (formData.name && !formData.letter) {
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       letter: getDefaultLetter(prev.name)
+  //     }));
+  //   }
+  // }, [formData.name]);
+
+
   useEffect(() => {
-    if (formData.name && !formData.letter) {
+    if (formData.name && !isLetterManuallyEdited.current) {
       setFormData(prev => ({
         ...prev,
         letter: getDefaultLetter(prev.name)
       }));
+    } else if (formData.name && isLetterManuallyEdited.current) {
+      // Only update the Dear part in custom letter
+      const updatedLetter = formData.letter.replace(
+        /Dear .+,/,
+        `Dear ${formData.name},`
+      );
+      if (updatedLetter !== formData.letter) {
+        setFormData(prev => ({
+          ...prev,
+          letter: updatedLetter
+        }));
+      }
     }
   }, [formData.name]);
 
@@ -543,6 +567,14 @@ With all my love,
     } finally {
       setUploading(false);
     }
+  };
+
+  const canShowPreview = () => {
+    if (formData.images.length === 0) {
+      toast.error('Please upload at least 1 photo before previewing your surprise');
+      return false;
+    }
+    return true;
   };
 
   // Star Field Component
@@ -903,7 +935,12 @@ With all my love,
                   Back
                 </button>
                 <button
-                  onClick={() => setShowPreview(true)}
+                  // onClick={() => setShowPreview(true)}
+                  onClick={() => {
+                    if (canShowPreview()) {
+                      setShowPreview(true);
+                    }
+                  }}
                   className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg font-poppins"
                 >
                   See Preview →

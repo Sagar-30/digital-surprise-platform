@@ -15,9 +15,9 @@ function App() {
     <AuthProvider>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<CreateSurprisePageNew />} />
+        <Route path="/home" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/create" element={<CreateSurprisePageNew />} />
         <Route path="/share" element={<SharePage />} />
         <Route path="/surprise/:id" element={<SurpriseViewerPage />} />
         <Route path="/payment-success/:surpriseId" element={<PaymentSuccessPage />} />

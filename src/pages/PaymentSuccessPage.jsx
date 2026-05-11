@@ -99,7 +99,7 @@ const PaymentSuccessPage = () => {
                     </div>
                 </div>
 
-        // QR Code Section - Using API instead of package
+        {/* // QR Code Section - Using API instead of package */}
                 <div className="text-center mb-6">
                     <p className="text-white text-sm font-semibold mb-3 font-poppins">Scan QR code to open on mobile:</p>
                     <div className="inline-block p-3 bg-white rounded-xl">
