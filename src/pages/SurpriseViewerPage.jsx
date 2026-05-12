@@ -7,8 +7,10 @@ import CountdownComponent from '../components/surprise/CountdownComponent';
 import PuzzleGameComponent from '../components/surprise/PuzzleGameComponent';
 import MusicPlayer from '../components/surprise/MusicPlayer';
 import QuizComponent from '../components/surprise/QuizComponent';
-import GiftBoxComponent from '../components/surprise/GiftBoxComponent';
-import TimelineComponent from '../components/surprise/TimelineComponent';
+import CakeRevealComponent from '../components/surprise/CakeRevealComponent';
+import BondRevealComponent from '../components/surprise/BondRevealComponent';
+import VibeRevealComponent from '../components/surprise/VibeRevealComponent';
+import FriendRevealComponent from '../components/surprise/FriendRevealComponent';
 import MessageReveal from '../components/surprise/MessageReveal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import VideoPlayerComponent from '../components/surprise/VideoPlayerComponent';
@@ -17,21 +19,18 @@ import CompletionComponent from '../components/surprise/CompletionComponent';
 const SurpriseViewerPage = () => {
   const { id } = useParams();
   const { getSurprise, currentSurprise, isLoading } = useSurpriseStore();
-  const [stage, setStage] = useState('message'); // countdown, puzzle, quiz, gift, message, timeline, video, complete
+  const [stage, setStage] = useState('countdown'); //countdown
   const [showConfetti, setShowConfetti] = useState(false);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    let localStage = localStorage.getItem("Surprisestage");
-    // console.log(localStage)
-    if (localStage) {
-      // setStage(localStage)
-      // setStage("gift")
-    } else {
-      setStage("countdown")
+    // Load saved stage from localStorage
+    const savedStage = localStorage.getItem(`surprise_stage_${id}`);
+    if (savedStage && savedStage !== 'complete') {
+      setStage(savedStage);
     }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -48,43 +47,53 @@ const SurpriseViewerPage = () => {
 
   const handleCountdownComplete = () => {
     setStage('puzzle');
-    localStorage.setItem("Surprisestage", 'puzzle');
+    localStorage.setItem(`surprise_stage_${id}`, 'puzzle');
   };
 
   const handlePuzzleComplete = () => {
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);
-    setStage('quiz');
-    localStorage.setItem("Surprisestage", "quiz");
+    // setStage('quiz');
+    // localStorage.setItem(`surprise_stage_${id}`, 'quiz');
+    setStage('cake');
+    localStorage.setItem(`surprise_stage_${id}`, 'cake');
   };
 
   const handleQuizComplete = () => {
-    // setStage('gift');
-    // localStorage.setItem("Surprisestage", "gift");
-    setStage('message');
-    localStorage.setItem("Surprisestage", "message");
+    setStage('cake');
+    localStorage.setItem(`surprise_stage_${id}`, 'cake');
   };
 
-  const handleGiftOpen = () => {
+  const handleCakeComplete = () => {
+    setStage('bond');
+    localStorage.setItem(`surprise_stage_${id}`, 'bond');
+  };
+
+  const handleBondComplete = () => {
+    setStage('vibe');
+    localStorage.setItem(`surprise_stage_${id}`, 'vibe');
+  };
+
+  const handleVibeComplete = () => {
+    setStage('friend');
+    localStorage.setItem(`surprise_stage_${id}`, 'friend');
+  };
+
+  const handleFriendComplete = () => {
     setStage('message');
-    localStorage.setItem("Surprisestage", "message");
+    localStorage.setItem(`surprise_stage_${id}`, 'message');
   };
 
   const handleMessageComplete = () => {
-    setStage('timeline');
-    localStorage.setItem("Surprisestage", "timeline");
-  };
-
-  const handleTimelineComplete = () => {
     setStage('video');
-    localStorage.setItem("Surprisestage", "video");
+    localStorage.setItem(`surprise_stage_${id}`, 'video');
   };
 
   const handleVideoComplete = () => {
     setStage('complete');
-
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 5000);
+    localStorage.removeItem(`surprise_stage_${id}`);
   };
 
   if (isLoading) {
@@ -104,16 +113,16 @@ const SurpriseViewerPage = () => {
 
   if (currentSurprise.hasPassword && !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-950 via-blue-950 to-indigo-950">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="glass-card p-8 max-w-md w-full"
+          className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 max-w-md w-full border border-white/20 shadow-2xl"
         >
-          <h2 className="text-2xl font-bold text-white mb-4 text-center">
+          <h2 className="text-2xl font-bold text-white mb-4 text-center font-poppins">
             Secret Entry 🔒
           </h2>
-          <p className="text-gray-300 mb-6 text-center">
+          <p className="text-gray-300 mb-6 text-center font-poppins">
             This surprise is protected. Enter the password to continue.
           </p>
           <form onSubmit={handlePasswordSubmit}>
@@ -121,11 +130,11 @@ const SurpriseViewerPage = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="glass-input w-full mb-4"
+              className="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 mb-4 font-poppins"
               placeholder="Enter password..."
               autoFocus
             />
-            <button type="submit" className="neon-button w-full">
+            <button type="submit" className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-pink-500/25 transition-all font-poppins">
               Unlock Surprise
             </button>
           </form>
@@ -135,11 +144,11 @@ const SurpriseViewerPage = () => {
   }
 
   return (
-    <div className="min-h-screen py-12">
+    <div className="min-h-screen py-12 relative overflow-hidden bg-gradient-to-br from-gray-950 via-blue-950 to-indigo-950">
       {showConfetti && <ReactConfetti />}
-      <MusicPlayer src={currentSurprise.music} autoPlay />
+      {currentSurprise.music && <MusicPlayer src={currentSurprise.music} autoPlay />}
 
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 relative z-10">
         <AnimatePresence mode="wait">
           {stage === 'countdown' && (
             <motion.div
@@ -155,7 +164,7 @@ const SurpriseViewerPage = () => {
             </motion.div>
           )}
 
-          {stage === 'puzzle' && (
+          {stage === 'puzzle' && currentSurprise.images && currentSurprise.images.length > 0 && (
             <motion.div
               key="puzzle"
               initial={{ opacity: 0, y: 50 }}
@@ -169,7 +178,7 @@ const SurpriseViewerPage = () => {
             </motion.div>
           )}
 
-          {stage === 'quiz' && currentSurprise.quiz.length > 0 && (
+          {stage === 'quiz' && currentSurprise.quiz && currentSurprise.quiz.length > 0 && (
             <motion.div
               key="quiz"
               initial={{ opacity: 0, y: 50 }}
@@ -183,21 +192,63 @@ const SurpriseViewerPage = () => {
             </motion.div>
           )}
 
-          {stage === 'gift' && (
+          {stage === 'cake' && currentSurprise.cake && (
             <motion.div
-              key="gift"
-              initial={{ opacity: 0, scale: 0.8 }}
+              key="cake"
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
+              exit={{ opacity: 0, scale: 0.9 }}
             >
-              <GiftBoxComponent
-                onOpen={handleGiftOpen}
-                surpriseContent="You're amazing! Here's a special surprise for you! 🎁"
+              <CakeRevealComponent
+                cakeType={currentSurprise.cake}
+                onComplete={handleCakeComplete}
               />
             </motion.div>
           )}
 
-          {stage === 'message' && (
+          {stage === 'bond' && currentSurprise.bond && currentSurprise.bond.length > 0 && (
+            <motion.div
+              key="bond"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 50 }}
+            >
+              <BondRevealComponent
+                bonds={currentSurprise.bond}
+                onComplete={handleBondComplete}
+              />
+            </motion.div>
+          )}
+
+          {stage === 'vibe' && currentSurprise.vibe && (
+            <motion.div
+              key="vibe"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+            >
+              <VibeRevealComponent
+                vibe={currentSurprise.vibe}
+                onComplete={handleVibeComplete}
+              />
+            </motion.div>
+          )}
+
+          {stage === 'friend' && currentSurprise.friend && (
+            <motion.div
+              key="friend"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+            >
+              <FriendRevealComponent
+                friend={currentSurprise.friend}
+                onComplete={handleFriendComplete}
+              />
+            </motion.div>
+          )}
+
+          {stage === 'message' && currentSurprise.letter && (
             <motion.div
               key="message"
               initial={{ opacity: 0 }}
@@ -205,25 +256,9 @@ const SurpriseViewerPage = () => {
               exit={{ opacity: 0 }}
             >
               <MessageReveal
-                message={currentSurprise.message}
+                message={currentSurprise.letter}
                 onComplete={handleMessageComplete}
               />
-            </motion.div>
-          )}
-
-          {stage === 'timeline' && currentSurprise.memories?.length > 0 && (
-            <motion.div
-              key="timeline"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <TimelineComponent memories={currentSurprise.memories} />
-              <div className="text-center mt-8">
-                <button onClick={handleTimelineComplete} className="neon-button">
-                  Continue →
-                </button>
-              </div>
             </motion.div>
           )}
 

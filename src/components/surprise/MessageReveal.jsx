@@ -7,7 +7,7 @@ const MessageReveal = ({ message, onComplete }) => {
   const [showEnvelope, setShowEnvelope] = useState(true);
   const [isOpening, setIsOpening] = useState(false);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-  
+
   useEffect(() => {
     if (!showEnvelope && index < message.length) {
       const speed = Math.random() * 60 + 50;
@@ -15,13 +15,13 @@ const MessageReveal = ({ message, onComplete }) => {
         setDisplayText(prev => prev + message[index]);
         setIndex(index + 1);
       }, speed);
-      
+
       return () => clearTimeout(timer);
     } else if (!showEnvelope && index === message.length) {
       setIsTypingComplete(true);
     }
   }, [index, message, showEnvelope]);
-  
+
   const openEnvelope = () => {
     setIsOpening(true);
     setTimeout(() => {
@@ -29,11 +29,11 @@ const MessageReveal = ({ message, onComplete }) => {
       setIsOpening(false);
     }, 800);
   };
-  
+
   const handleContinue = () => {
     onComplete();
   };
-  
+
   if (showEnvelope) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4">
@@ -48,35 +48,38 @@ const MessageReveal = ({ message, onComplete }) => {
             animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
-          
+
           <div className="relative w-64 h-48 sm:w-80 sm:h-56 bg-gradient-to-br from-pink-400 to-rose-400 rounded-lg shadow-2xl">
             <motion.div
               className="absolute -top-12 left-0 w-full h-16 bg-gradient-to-br from-pink-500 to-rose-500 rounded-t-lg"
               animate={isOpening ? { y: -80, rotateX: 180, opacity: 0 } : {}}
               transition={{ duration: 0.5 }}
             >
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-8 bg-pink-600" 
-                   style={{ clipPath: 'polygon(0% 0%, 100% 0%, 50% 100%)' }} />
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-8 bg-pink-600"
+                style={{ clipPath: 'polygon(0% 0%, 100% 0%, 50% 100%)' }} />
             </motion.div>
-            
+
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
               <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-lg">
                 <span className="text-2xl">💕</span>
               </div>
             </div>
-            
+
             <div className="absolute bottom-4 left-4 right-4 h-px bg-white/30" />
             <div className="absolute bottom-8 left-4 right-4 h-px bg-white/20" />
           </div>
-          
-          <p className="text-center text-gray-600 dark:text-gray-300 mt-6 text-sm sm:text-base animate-pulse">
+
+          {/* <p className="text-center text-gray-600 dark:text-gray-300 mt-6 text-sm sm:text-base animate-pulse">
+            💝 Click to open your letter 💝
+          </p> */}
+          <p className="text-center text-white mt-6 text-sm sm:text-base animate-pulse">
             💝 Click to open your letter 💝
           </p>
         </motion.div>
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-[60vh] flex items-center justify-center p-4">
       <motion.div
@@ -92,7 +95,7 @@ const MessageReveal = ({ message, onComplete }) => {
               <span className="text-pink-500">💕</span>
             </div>
           </div>
-          
+
           {/* Message Display */}
           <div className="min-h-[250px]">
             <p className="text-base md:text-lg text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
@@ -106,7 +109,7 @@ const MessageReveal = ({ message, onComplete }) => {
               )}
             </p>
           </div>
-          
+
           {/* Typing Indicator */}
           {!isTypingComplete && (
             <div className="flex items-center gap-1 mt-4">
@@ -116,7 +119,7 @@ const MessageReveal = ({ message, onComplete }) => {
               <span className="text-xs text-gray-400 ml-2">Writing your message...</span>
             </div>
           )}
-          
+
           {/* Signature */}
           {isTypingComplete && (
             <motion.div
@@ -132,7 +135,7 @@ const MessageReveal = ({ message, onComplete }) => {
               </div>
             </motion.div>
           )}
-          
+
           {/* Continue Button */}
           {isTypingComplete && (
             <motion.div

@@ -21,7 +21,6 @@ const CompletionComponent = () => {
     };
     window.addEventListener('resize', handleResize);
     
-    // Hide confetti after 5 seconds
     const timer = setTimeout(() => {
       setShowConfetti(false);
     }, 5000);
@@ -41,7 +40,7 @@ const CompletionComponent = () => {
   }));
   
   return (
-    <div className="min-h-[70vh] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-[70vh] flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-gray-950 via-blue-950 to-indigo-950">
       {/* Confetti */}
       {showConfetti && (
         <ReactConfetti
@@ -66,7 +65,7 @@ const CompletionComponent = () => {
             }}
             animate={{ 
               y: '-20%',
-              opacity: [0, 1, 0],
+              opacity: [0, 0.5, 0],
               scale: [0, 1, 0],
               rotate: [0, 360]
             }}
@@ -91,7 +90,7 @@ const CompletionComponent = () => {
         className="w-full max-w-2xl mx-auto relative z-10"
       >
         {/* Celebration Card */}
-        <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-2xl p-6 md:p-10 border border-white/50 dark:border-white/10 shadow-2xl text-center">
+        <div className="bg-white/15 backdrop-blur-xl rounded-2xl p-6 md:p-10 border border-white/30 shadow-2xl text-center">
           {/* Animated Trophy/Emoji */}
           <motion.div
             animate={{ 
@@ -111,14 +110,14 @@ const CompletionComponent = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               Congratulations! 🎉
             </span>
           </motion.h1>
           
           {/* Subtitle */}
           <motion.p 
-            className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-6"
+            className="text-base sm:text-lg md:text-xl text-white/90 mb-6"
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -134,14 +133,14 @@ const CompletionComponent = () => {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.4 + i * 0.1 }}
-                className="w-2 h-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500"
+                className="w-2 h-2 rounded-full bg-gradient-to-r from-pink-400 to-purple-400"
               />
             ))}
           </div>
           
           {/* Message Card */}
           <motion.div 
-            className="bg-white/50 dark:bg-gray-900/50 rounded-xl p-6 mb-6"
+            className="bg-white/10 rounded-xl p-6 mb-6 border border-white/20"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
@@ -151,7 +150,7 @@ const CompletionComponent = () => {
               <span className="text-2xl">💝</span>
               <span className="text-2xl">💕</span>
             </div>
-            <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg leading-relaxed">
+            <p className="text-white text-base md:text-lg leading-relaxed">
               Thank you for being part of this special moment. 
               This experience was created just for you with lots of love! ❤️
             </p>
@@ -164,7 +163,7 @@ const CompletionComponent = () => {
             transition={{ delay: 0.6 }}
             className="mb-6"
           >
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            <p className="text-sm text-white/80 mb-3">
               Spread the love and create magical moments for your loved ones!
             </p>
             
@@ -211,7 +210,7 @@ const CompletionComponent = () => {
             
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm text-gray-700 dark:text-white rounded-xl font-semibold border border-pink-300 dark:border-pink-500/30 hover:bg-white/60 transition-all"
+              className="px-6 py-3 bg-white/15 backdrop-blur-sm text-white rounded-xl font-semibold border border-white/30 hover:bg-white/25 transition-all"
             >
               Watch Again 🎬
             </button>
@@ -222,7 +221,7 @@ const CompletionComponent = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="text-xs text-gray-400 dark:text-gray-500 mt-6"
+            className="text-xs text-white/60 mt-6"
           >
             Made with 💕 for creating beautiful moments
           </motion.p>
@@ -235,9 +234,9 @@ const CompletionComponent = () => {
           transition={{ delay: 0.9 }}
           className="mt-6 text-center"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-full">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/15 backdrop-blur-sm rounded-full border border-white/20">
             <span className="text-yellow-400 text-sm">★★★★★</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-white/70">
               Loved this experience?
             </span>
           </div>

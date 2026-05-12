@@ -532,8 +532,6 @@ With all my love,
       // Initiate payment first
       const paymentResult = await initiatePayment(null, 10);
 
-      console.log(paymentResult);
-
       if (paymentResult.success) {
         // Upload all files after payment succeeds
         const imageUrls = [];
