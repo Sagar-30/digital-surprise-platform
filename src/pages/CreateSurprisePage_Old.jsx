@@ -10,11 +10,17 @@ import { initiatePayment } from '../utils/paymentUtils.js';
 
 // Cake Selection Modal
 const CakeModal = ({ isOpen, onClose, selectedCake, onSelectCake }) => {
-  const cakeOptions = [
-    { value: 'Chocolate Fantasy', emoji: '🍫', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&h=80&fit=crop', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
-    { value: 'Princess Double Storey', emoji: '👑', image: 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=80&h=80&fit=crop', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
-    { value: 'Galaxy Classic', emoji: '🌌', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
-    { value: 'Strawberry Princess', emoji: '🍓', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
+  // const cakeOptions = [
+  //   { value: 'Chocolate Fantasy', emoji: '🍫', image: '/cake/chocolate-cake.webp', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
+  //   { value: 'Princess Double Storey', emoji: '👑', image: '/cake/princess-cake.webp', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
+  //   { value: 'Galaxy Classic', emoji: '🌌', image: '/cake/galaxy-cake.webp', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
+  //   { value: 'Strawberry Princess', emoji: '🍓', image: '/cake/strawberry-cake.webp', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
+  // ];
+const cakeOptions = [
+    { value: 'Chocolate Fantasy', emoji: '', image: '/cake/chocolate-cake.webp', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
+    { value: 'Princess Double Storey', emoji: '', image: '/cake/princess-cake.webp', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
+    { value: 'Galaxy Classic', emoji: '', image: '/cake/galaxy-cake.webp', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
+    { value: 'Strawberry Princess', emoji: '', image: '/cake/strawberry-cake.webp', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
   ];
 
   if (!isOpen) return null;
@@ -164,10 +170,15 @@ const VibeModal = ({ isOpen, onClose, selectedVibe, onSelectVibe }) => {
 
 // Friend Selection Modal
 const FriendModal = ({ isOpen, onClose, selectedFriend, onSelectFriend }) => {
+  // const friendOptions = [
+  //   { value: 'Bunny', emoji: '🐰', image: 'https://cdn-icons-png.flaticon.com/512/616/616408.png', label: 'Bunny', desc: 'Soft and cuddly companion' },
+  //   { value: 'Kitty', emoji: '🐱', image: 'https://cdn-icons-png.flaticon.com/512/616/616430.png', label: 'Kitty', desc: 'Playful and curious friend' },
+  //   { value: 'Teddy', emoji: '🧸', image: 'https://cdn-icons-png.flaticon.com/512/616/616478.png', label: 'Teddy', desc: 'Classic bear hugger' }
+  // ];
   const friendOptions = [
-    { value: 'Bunny', emoji: '🐰', image: 'https://cdn-icons-png.flaticon.com/512/616/616408.png', label: 'Bunny', desc: 'Soft and cuddly companion' },
-    { value: 'Kitty', emoji: '🐱', image: 'https://cdn-icons-png.flaticon.com/512/616/616430.png', label: 'Kitty', desc: 'Playful and curious friend' },
-    { value: 'Teddy', emoji: '🧸', image: 'https://cdn-icons-png.flaticon.com/512/616/616478.png', label: 'Teddy', desc: 'Classic bear hugger' }
+    { value: 'Bunny', emoji: '', image: '/friend/bunny.webp', label: 'Bunny', desc: 'Soft and cuddly companion' },
+    { value: 'Kitty', emoji: '', image: '/friend/kitty.webp', label: 'Kitty', desc: 'Playful and curious friend' },
+    { value: 'Teddy', emoji: '', image: '/friend/teddy.webp', label: 'Teddy', desc: 'Classic bear hugger' }
   ];
 
   if (!isOpen) return null;
@@ -377,11 +388,17 @@ With all my love,
   }, [formData.name]);
 
   // Cake options with images
+  // const cakeOptions = [
+  //   { value: 'Chocolate Fantasy', emoji: '🍫', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&h=80&fit=crop', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
+  //   { value: 'Princess Double Storey', emoji: '👑', image: 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=80&h=80&fit=crop', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
+  //   { value: 'Galaxy Classic', emoji: '🌌', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
+  //   { value: 'Strawberry Princess', emoji: '🍓', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
+  // ];
   const cakeOptions = [
-    { value: 'Chocolate Fantasy', emoji: '🍫', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&h=80&fit=crop', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
-    { value: 'Princess Double Storey', emoji: '👑', image: 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=80&h=80&fit=crop', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
-    { value: 'Galaxy Classic', emoji: '🌌', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
-    { value: 'Strawberry Princess', emoji: '🍓', image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=80&h=80&fit=crop', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
+    { value: 'Chocolate Fantasy', emoji: '', image: '/cake/chocolate-cake.webp', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
+    { value: 'Princess Double Storey', emoji: '', image: '/cake/princess-cake.webp', label: 'Princess Double Storey', desc: 'Elegant two-tier princess cake' },
+    { value: 'Galaxy Classic', emoji: '', image: '/cake/galaxy-cake.webp', label: 'Galaxy Classic', desc: 'Magical galaxy themed design' },
+    { value: 'Strawberry Princess', emoji: '', image: '/cake/strawberry-cake.webp', label: 'Strawberry Princess', desc: 'Fresh strawberry cream delight' }
   ];
 
   // Bond options
@@ -403,9 +420,9 @@ With all my love,
 
   // Friend options
   const friendOptions = [
-    { value: 'Bunny', emoji: '🐰', image: 'https://cdn-icons-png.flaticon.com/512/616/616408.png', label: 'Bunny', desc: 'Soft and cuddly companion' },
-    { value: 'Kitty', emoji: '🐱', image: 'https://cdn-icons-png.flaticon.com/512/616/616430.png', label: 'Kitty', desc: 'Playful and curious friend' },
-    { value: 'Teddy', emoji: '🧸', image: 'https://cdn-icons-png.flaticon.com/512/616/616478.png', label: 'Teddy', desc: 'Classic bear hugger' }
+    { value: 'Bunny', emoji: '', image: '/friend/bunny.webp', label: 'Bunny', desc: 'Soft and cuddly companion' },
+    { value: 'Kitty', emoji: '', image: '/friend/kitty.webp', label: 'Kitty', desc: 'Playful and curious friend' },
+    { value: 'Teddy', emoji: '', image: '/friend/teddy.webp', label: 'Teddy', desc: 'Classic bear hugger' }
   ];
 
   // Generate preview URLs for images
@@ -513,7 +530,9 @@ With all my love,
     setUploading(true);
     try {
       // Initiate payment first
-      const paymentResult = await initiatePayment(null, 199);
+      const paymentResult = await initiatePayment(null, 10);
+
+      console.log(paymentResult);
 
       if (paymentResult.success) {
         // Upload all files after payment succeeds
@@ -559,7 +578,7 @@ With all my love,
         navigate(`/payment-success/${surpriseId}`);
       } else {
         toast.error('Payment failed. Please try again.');
-        navigate(`/payment-failed`);
+        // navigate(`/payment-failed`);
       }
     } catch (error) {
       console.error('Submit error:', error);
