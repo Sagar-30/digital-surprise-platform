@@ -31,9 +31,9 @@ export const handler = async (event) => {
       body: ""
     };
   }
-  // console.log("Using Razorpay Key:", process.env.RAZORPAY_KEY_ID);
+  console.log("Using Razorpay Key:", process.env.RAZORPAY_KEY_ID);
   try {
-    // console.log("Using Razorpay Key:", process.env.RAZORPAY_KEY_ID);
+    console.log("Using Razorpay Key:", process.env.RAZORPAY_KEY_ID);
 
     const body = event.body ? JSON.parse(event.body) : {};
     const amount = Number(body.amount); // rupees
