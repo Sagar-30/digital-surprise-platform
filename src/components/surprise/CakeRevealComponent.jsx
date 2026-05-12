@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const CakeRevealComponent = ({ cakeType, onComplete }) => {
   const [stage, setStage] = useState('candles'); // candles, cutting, revealed
   const [litCandles, setLitCandles] = useState([true, true, true, true, true]);
-  const [blowingCandle, setBlowingCandle] = useState(null);
-  const [isBlowing, setIsBlowing] = useState(false);
+  const [isBlowingAll, setIsBlowingAll] = useState(false);
   const [cutProgress, setCutProgress] = useState(0);
   const [showKnife, setShowKnife] = useState(false);
   const [particles, setParticles] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const cakeContainerRef = useRef(null);
+  const knifeRef = useRef(null);
 
   const cakeOptions = {
     'Chocolate Fantasy': { emoji: '🍫', image: '/cake/chocolate-cake.webp', label: 'Chocolate Fantasy', desc: 'Rich chocolate layers with ganache' },
@@ -20,85 +22,99 @@ const CakeRevealComponent = ({ cakeType, onComplete }) => {
 
   const cake = cakeOptions[cakeType] || cakeOptions['Galaxy Classic'];
 
-  // Blow candle one by one
-  const blowCandle = (index) => {
-    if (!litCandles[index] || isBlowing) return;
+  // Blow all candles at once with microphone detection or button
+  const blowAllCandles = () => {
+    if (isBlowingAll) return;
     
-    setBlowingCandle(index);
-    setIsBlowing(true);
+    setIsBlowingAll(true);
     
-    // Create puff particles
+    // Create puff particles for all candles
     const newParticles = [];
-    for (let i = 0; i < 10; i++) {
-      newParticles.push({
-        id: Date.now() + i,
-        x: 30 + index * 10,
-        y: 50,
-        angle: Math.random() * Math.PI * 2,
-        speed: Math.random() * 5 + 2,
-      });
+    for (let candle = 0; candle < 5; candle++) {
+      for (let i = 0; i < 8; i++) {
+        newParticles.push({
+          id: Date.now() + candle * 100 + i,
+          x: 30 + candle * 10,
+          y: 45,
+          angle: Math.random() * Math.PI * 2,
+          speed: Math.random() * 8 + 3,
+        });
+      }
     }
     setParticles(prev => [...prev, ...newParticles]);
     
-    setTimeout(() => {
-      setLitCandles(prev => {
-        const newState = [...prev];
-        newState[index] = false;
-        return newState;
-      });
-      setBlowingCandle(null);
-      setIsBlowing(false);
-      
-      // Play blow sound effect (optional)
-      const audio = new Audio('/sounds/blow.mp3');
-      audio.volume = 0.3;
-      audio.play().catch(() => {});
-      
-      // Check if all candles are blown
-      const allBlown = litCandles.filter((_, idx) => idx !== index && litCandles[idx]).length === 0;
-      if (allBlown || (litCandles.filter(c => c).length === 1 && index === litCandles.findIndex(c => c))) {
-        // Small delay before moving to cutting stage
+    // Play blow sound
+    const audio = new Audio('/sounds/blow.mp3');
+    audio.volume = 0.3;
+    audio.play().catch(() => {});
+    
+    // Blow out candles one by one with delay
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      if (currentIndex < 5) {
+        setLitCandles(prev => {
+          const newState = [...prev];
+          newState[currentIndex] = false;
+          return newState;
+        });
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+        setIsBlowingAll(false);
+        
+        // Move to cutting stage after all candles are blown
         setTimeout(() => {
           setStage('cutting');
           setShowKnife(true);
         }, 1000);
       }
-    }, 800);
+    }, 200);
   };
 
-  // Handle cake cutting with knife drag
+  // Handle cake cutting - Mobile friendly
   const handleCutStart = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const startX = e.clientX - rect.left;
-    if (startX > 30 && startX < rect.width - 30) {
-      setCutProgress(10);
+    e.preventDefault();
+    setIsDragging(true);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const rect = cakeContainerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const x = clientX - rect.left;
+      if (x > 30 && x < rect.width - 30) {
+        setCutProgress(10);
+      }
     }
   };
 
   const handleCutMove = (e) => {
-    if (cutProgress >= 100) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const progress = Math.min(100, Math.max(0, ((x - 30) / (rect.width - 60)) * 100));
-    setCutProgress(progress);
+    if (!isDragging || cutProgress >= 100) return;
+    e.preventDefault();
     
-    // Add cutting particles
-    if (progress > cutProgress && progress % 20 < 5) {
-      const newParticles = [];
-      for (let i = 0; i < 5; i++) {
-        newParticles.push({
-          id: Date.now() + i,
-          x: x / rect.width * 100,
-          y: 55 + Math.random() * 10,
-          angle: Math.random() * Math.PI * 2,
-          speed: Math.random() * 3 + 1,
-        });
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const rect = cakeContainerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const x = Math.min(rect.width - 30, Math.max(30, clientX - rect.left));
+      const progress = Math.min(100, Math.max(0, ((x - 30) / (rect.width - 60)) * 100));
+      setCutProgress(progress);
+      
+      // Add cutting particles
+      if (progress > cutProgress && progress % 15 < 5) {
+        const newParticles = [];
+        for (let i = 0; i < 8; i++) {
+          newParticles.push({
+            id: Date.now() + i,
+            x: (x / rect.width) * 100,
+            y: 55 + Math.random() * 10,
+            angle: Math.random() * Math.PI * 2,
+            speed: Math.random() * 4 + 2,
+          });
+        }
+        setParticles(prev => [...prev, ...newParticles]);
       }
-      setParticles(prev => [...prev, ...newParticles]);
     }
   };
 
   const handleCutEnd = () => {
+    setIsDragging(false);
     if (cutProgress >= 90) {
       setCutProgress(100);
       setTimeout(() => {
@@ -107,11 +123,28 @@ const CakeRevealComponent = ({ cakeType, onComplete }) => {
           onComplete();
         }, 2000);
       }, 500);
-    } else {
-      setCutProgress(0);
+    } else if (cutProgress > 0) {
       toast.error('Cut all the way through the cake!');
+      setCutProgress(0);
     }
   };
+
+  // Add global event listeners for touch/mouse end
+  useEffect(() => {
+    const handleGlobalEnd = () => {
+      if (isDragging) {
+        handleCutEnd();
+      }
+    };
+    
+    window.addEventListener('mouseup', handleGlobalEnd);
+    window.addEventListener('touchend', handleGlobalEnd);
+    
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalEnd);
+      window.removeEventListener('touchend', handleGlobalEnd);
+    };
+  }, [isDragging, cutProgress]);
 
   // Clean up particles
   useEffect(() => {
@@ -120,6 +153,26 @@ const CakeRevealComponent = ({ cakeType, onComplete }) => {
     }, 2000);
     return () => clearInterval(timer);
   }, []);
+
+  // Animated flame component
+  const Flame = () => (
+    <motion.div
+      className="relative"
+      animate={{ 
+        scale: [1, 1.1, 0.95, 1.05, 1],
+      }}
+      transition={{ duration: 0.5, repeat: Infinity }}
+    >
+      {/* Outer flame */}
+      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-5 h-5 bg-orange-400 rounded-full filter blur-sm" />
+      {/* Middle flame */}
+      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-3.5 h-3.5 bg-orange-300 rounded-full filter blur-sm" />
+      {/* Inner flame */}
+      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-yellow-200 rounded-full" />
+      {/* Core flame */}
+      <div className="absolute -top-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
+    </motion.div>
+  );
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-gray-950 via-blue-950 to-indigo-950">
@@ -154,8 +207,8 @@ const CakeRevealComponent = ({ cakeType, onComplete }) => {
           transition={{ delay: 0.2 }}
           className="text-gray-300 mb-8 font-poppins"
         >
-          {stage === 'candles' && "Blow out the candles one by one!"}
-          {stage === 'cutting' && "Drag the knife across the cake"}
+          {stage === 'candles' && "Blow out all the candles together!"}
+          {stage === 'cutting' && "Drag your finger/knife across the cake"}
           {stage === 'revealed' && "The cake is ready to enjoy!"}
         </motion.p>
 
@@ -168,24 +221,27 @@ const CakeRevealComponent = ({ cakeType, onComplete }) => {
             transition={{ duration: 2, repeat: Infinity }}
           />
           
-          {/* Cake Image */}
+          {/* Cake Image - Made draggable for mobile */}
           <div 
-            className="relative cursor-pointer"
+            ref={cakeContainerRef}
+            className="relative select-none touch-none"
+            onMouseDown={stage === 'cutting' ? handleCutStart : undefined}
             onMouseMove={stage === 'cutting' ? handleCutMove : undefined}
-            onMouseUp={stage === 'cutting' ? handleCutEnd : undefined}
-            onMouseLeave={stage === 'cutting' ? handleCutEnd : undefined}
+            onTouchStart={stage === 'cutting' ? handleCutStart : undefined}
+            onTouchMove={stage === 'cutting' ? handleCutMove : undefined}
           >
             <img
               src={cake.image}
               alt={cake.label}
-              className="w-80 h-80 mx-auto object-contain rounded-2xl"
+              className="w-80 h-80 mx-auto object-contain rounded-2xl pointer-events-none"
+              draggable="false"
             />
             
             {/* Candles */}
             {stage === 'candles' && (
               <div className="absolute inset-0">
                 {[...Array(5)].map((_, i) => (
-                  <motion.div
+                  <div
                     key={i}
                     className="absolute"
                     style={{
@@ -195,85 +251,71 @@ const CakeRevealComponent = ({ cakeType, onComplete }) => {
                     }}
                   >
                     {/* Candle stick */}
-                    <div className="w-3 h-8 bg-gradient-to-r from-red-400 to-pink-500 rounded-full" />
+                    <div className="w-3 h-8 bg-gradient-to-r from-red-400 to-pink-500 rounded-full shadow-md" />
+                    
+                    {/* Candle wick */}
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-0.5 h-2 bg-gray-800 rounded-full" />
                     
                     {/* Flame */}
-                    {litCandles[i] && (
-                      <motion.div
-                        className="absolute -top-4 left-1/2 transform -translate-x-1/2"
-                        animate={{ 
-                          scale: [1, 1.2, 1],
-                          y: [0, -3, 0]
-                        }}
-                        transition={{ duration: 0.5, repeat: Infinity }}
-                      >
-                        <div className="relative">
-                          <div className="w-4 h-4 bg-orange-400 rounded-full filter blur-sm" />
-                          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-yellow-300 rounded-full" />
-                        </div>
-                      </motion.div>
-                    )}
-                    
-                    {/* Blow button */}
-                    {litCandles[i] && (
-                      <button
-                        onClick={() => blowCandle(i)}
-                        disabled={isBlowing}
-                        className="absolute -top-12 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs whitespace-nowrap hover:bg-white/30 transition-all"
-                      >
-                        💨 Blow
-                      </button>
-                    )}
-                    
-                    {/* Blowing animation */}
-                    {blowingCandle === i && (
-                      <motion.div
-                        initial={{ scale: 0, opacity: 1 }}
-                        animate={{ scale: 2, opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-2xl"
-                      >
-                        💨
-                      </motion.div>
-                    )}
-                  </motion.div>
+                    {litCandles[i] && <Flame />}
+                  </div>
                 ))}
               </div>
             )}
             
-            {/* Cutting knife */}
+            {/* Cutting knife - Mobile friendly version */}
             {stage === 'cutting' && showKnife && (
               <motion.div
+                ref={knifeRef}
                 initial={{ x: -50, rotate: -30 }}
                 animate={{ x: `${cutProgress}%`, rotate: -30 }}
                 transition={{ type: 'spring', damping: 20 }}
-                className="absolute -top-4 left-0 text-3xl filter drop-shadow-lg"
-                style={{ marginLeft: '-15px' }}
+                className="absolute -top-6 left-0 text-4xl filter drop-shadow-lg"
+                style={{ marginLeft: '-20px' }}
               >
                 🔪
               </motion.div>
             )}
             
-            {/* Cut line */}
+            {/* Cut line with animation */}
             {stage === 'cutting' && cutProgress > 0 && (
-              <div 
-                className="absolute top-1/2 h-0.5 bg-white/60 rounded-full"
-                style={{ 
-                  width: `${cutProgress}%`,
-                  left: '15%',
-                  top: '50%',
-                  transform: 'translateY(-50%)'
-                }}
-              />
+              <>
+                <div 
+                  className="absolute top-1/2 h-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full"
+                  style={{ 
+                    width: `${cutProgress}%`,
+                    left: '15%',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    boxShadow: '0 0 5px rgba(236, 72, 153, 0.5)'
+                  }}
+                />
+                {/* Sparkle effect at cut point */}
+                {cutProgress < 100 && (
+                  <div
+                    className="absolute w-2 h-2 bg-yellow-400 rounded-full animate-ping"
+                    style={{
+                      left: `calc(15% + ${cutProgress}%)`,
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                  />
+                )}
+              </>
             )}
             
-            {/* Cutting instruction */}
+            {/* Cutting instruction overlay */}
             {stage === 'cutting' && cutProgress === 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="px-4 py-2 bg-black/50 backdrop-blur-sm rounded-full text-white text-sm animate-pulse">
-                  👆 Drag knife across the cake
+                <div className="px-4 py-2 bg-black/60 backdrop-blur-sm rounded-full text-white text-sm animate-bounce font-poppins">
+                  👆 Slide your finger across the cake
                 </div>
               </div>
+            )}
+            
+            {/* Dragging indicator */}
+            {stage === 'cutting' && isDragging && (
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full animate-pulse" />
             )}
           </div>
           
@@ -303,13 +345,24 @@ const CakeRevealComponent = ({ cakeType, onComplete }) => {
           </AnimatePresence>
         </div>
         
-        {/* Status message */}
+        {/* Blow All Candles Button */}
         {stage === 'candles' && (
-          <p className="text-center text-white/70 mt-6 text-sm font-poppins">
-            {litCandles.filter(c => c).length} candles remaining 💨
-          </p>
+          <div className="mt-8 space-y-4">
+            <button
+              onClick={blowAllCandles}
+              disabled={isBlowingAll}
+              className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-pink-500/25 transition-all disabled:opacity-50 flex items-center gap-2 mx-auto font-poppins"
+            >
+              <span className="text-xl">💨</span>
+              {isBlowingAll ? 'Blowing candles...' : 'Blow All Candles'}
+            </button>
+            <p className="text-center text-white/50 text-sm font-poppins">
+              {litCandles.filter(c => c).length} candles remaining
+            </p>
+          </div>
         )}
         
+        {/* Cutting progress bar */}
         {stage === 'cutting' && cutProgress > 0 && cutProgress < 100 && (
           <div className="mt-6">
             <div className="w-full bg-white/20 rounded-full h-2">
@@ -349,6 +402,9 @@ const CakeRevealComponent = ({ cakeType, onComplete }) => {
         @keyframes twinkle {
           0%, 100% { opacity: 0; }
           50% { opacity: 1; }
+        }
+        .touch-none {
+          touch-action: none;
         }
       `}</style>
     </div>
