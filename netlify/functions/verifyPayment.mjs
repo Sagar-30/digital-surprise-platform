@@ -8,7 +8,8 @@ const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:8888",
-  "https://splendorous-kitten-8af09b.netlify.app/"
+  "https://splendorous-kitten-8af09b.netlify.app/",
+  "https://birthday.theindiansanta.com/"
 ];
 
 export const handler = async (event) => {
