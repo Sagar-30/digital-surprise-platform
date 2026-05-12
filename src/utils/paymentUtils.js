@@ -3,16 +3,16 @@ import toast from 'react-hot-toast';
 // Create order on server
 async function createOrderOnServer(amountInRupees, surpriseId) {
   const isLocal = window.location.hostname === 'localhost';
-  const url = isLocal 
+  const url = isLocal
     ? 'http://localhost:8888/.netlify/functions/createOrder'
     : '/.netlify/functions/createOrder';
 
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 
+    body: JSON.stringify({
       amount: amountInRupees,
-      surpriseId: surpriseId 
+      surpriseId: surpriseId
     }),
   });
 
@@ -24,7 +24,7 @@ async function createOrderOnServer(amountInRupees, surpriseId) {
 // Verify payment on server
 async function verifyPaymentOnServer(paymentData) {
   const isLocal = window.location.hostname === 'localhost';
-  const url = isLocal 
+  const url = isLocal
     ? 'http://localhost:8888/.netlify/functions/verifyPayment'
     : '/.netlify/functions/verifyPayment';
 
@@ -59,17 +59,17 @@ function loadRazorpayScript() {
 // Main payment function
 export async function initiatePayment(surpriseId, amount = 199) {
   let loadingToastId = null;
-  
+
   try {
     // Show loading toast
     loadingToastId = toast.loading('Preparing payment...');
-    
+
     // Step 1: Create order on server
     const orderData = await createOrderOnServer(amount, surpriseId);
-    
+
     // Step 2: Load Razorpay script
     await loadRazorpayScript();
-    
+
     // Step 3: Open Razorpay checkout
     const options = {
       key: orderData.keyId,
@@ -96,33 +96,37 @@ export async function initiatePayment(surpriseId, amount = 199) {
       handler: async (response) => {
         try {
           toast.loading('Verifying payment...', { id: loadingToastId });
-          
-          // Step 4: Verify payment
+
           const verificationData = await verifyPaymentOnServer({
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
             surpriseId: surpriseId,
           });
-          
+
           if (verificationData.success) {
             toast.success('Payment successful! 🎉', { id: loadingToastId });
-            return { success: true, data: verificationData };
+            resolve({
+              success: true,
+              data: verificationData,
+              orderId: orderData.orderId,
+              paymentId: response.razorpay_payment_id  // Add this
+            });
           } else {
             throw new Error('Verification failed');
           }
         } catch (error) {
           toast.error(error.message || 'Payment verification failed', { id: loadingToastId });
-          return { success: false, error: error.message };
+          resolve({ success: false, error: error.message, orderId: orderData.orderId });
         }
       },
     };
-    
+
     const razorpay = new window.Razorpay(options);
     razorpay.open();
-    
+
     return { success: true, orderId: orderData.orderId };
-    
+
   } catch (error) {
     if (loadingToastId) {
       toast.error(error.message || 'Payment failed. Please try again.', { id: loadingToastId });
@@ -136,12 +140,12 @@ export async function initiatePayment(surpriseId, amount = 199) {
 // Alternative: Simplified version with callback
 export async function processPayment(surpriseId, amount = 199, onSuccess, onError) {
   const result = await initiatePayment(surpriseId, amount);
-  
+
   if (result.success && onSuccess) {
     onSuccess(result);
   } else if (!result.success && onError) {
     onError(result.error);
   }
-  
+
   return result;
 }
