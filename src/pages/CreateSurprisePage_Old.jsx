@@ -476,74 +476,7 @@ With all my love,
     closeModal();
   }, [tempBondSelection, closeModal]);
 
-  //  const handleSubmit = async (e) => {
-  //   if (e) e.preventDefault();
-
-  //   if (!formData.name || !formData.unlockDate) {
-  //     toast.error('Please fill in all required fields');
-  //     return;
-  //   }
-
-  //   setUploading(true);
-  //   try {
-  //     // Initiate payment first
-  //     const paymentResult = await initiatePayment(null, 10);
-
-  //     if (paymentResult.success) {
-  //       // Upload all files after payment succeeds
-  //       const imageUrls = [];
-  //       for (const image of formData.images) {
-  //         const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
-  //         imageUrls.push(url);
-  //       }
-
-  //       let musicUrl = null;
-  //       if (formData.music) {
-  //         musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
-  //       }
-
-  //       let videoUrl = null;
-  //       if (formData.video) {
-  //         videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
-  //       }
-
-  //       // Prepare surprise data
-  //       const surpriseData = {
-  //         name: formData.name,
-  //         occasion: formData.occasion,
-  //         unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
-  //         cake: formData.cake,
-  //         bond: formData.bond,
-  //         vibe: formData.vibe,
-  //         friend: formData.friend,
-  //         letter: formData.letter,
-  //         images: imageUrls,
-  //         music: musicUrl,
-  //         video: videoUrl,
-  //         selectedStyle: selectedStyle,
-  //         status: 'active', // directly active since payment succeeded
-  //         createdAt: new Date().toISOString(),
-  //         paymentInfo: paymentResult // store payment details if needed
-  //       };
-
-  //       // Create surprise in database
-  //       const surpriseId = await createSurprise(surpriseData);
-
-  //       toast.success('Payment successful and surprise created! 🎉');
-  //       navigate(`/payment-success/${surpriseId}`);
-  //     } else {
-  //       toast.error('Payment failed. Please try again.');
-  //       // navigate(`/payment-failed`);
-  //     }
-  //   } catch (error) {
-  //     console.error('Submit error:', error);
-  //     toast.error('Failed to process: ' + error.message);
-  //   } finally {
-  //     setUploading(false);
-  //   }
-  // };
-
-  const handleSubmit = async (e) => {
+   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
     if (!formData.name || !formData.unlockDate) {
@@ -551,88 +484,160 @@ With all my love,
       return;
     }
 
-    if (uploading) return;
-
     setUploading(true);
-    let loadingToastId = null;
-
     try {
-      // Step 1: Take payment
-      loadingToastId = toast.loading('💳 Processing payment...');
-
-      //const paymentResult = await initiatePayment(null, 199);
+      // Initiate payment first
+      console.log("Initiating payment");
+      
       const paymentResult = await initiatePayment(null, 10);
 
-      if (!paymentResult.success) {
-        toast.dismiss(loadingToastId);
-        toast.error('Payment failed. Please try again.');
-        setUploading(false);
-        return;
-      }
+      console.log("after Payment got result: ",paymentResult);
 
-      // Step 2: Payment successful - upload files
-      toast.loading('✅ Payment confirmed! Uploading your files...', { id: loadingToastId });
-
-      const imageUrls = [];
-      for (let i = 0; i < formData.images.length; i++) {
-        const image = formData.images[i];
-        const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
-        imageUrls.push(url);
-        toast.loading(`📸 Uploading images... (${i + 1}/${formData.images.length})`, { id: loadingToastId });
-      }
-
-      let musicUrl = null;
-      if (formData.music) {
-        toast.loading('🎵 Uploading music...', { id: loadingToastId });
-        musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
-      }
-
-      let videoUrl = null;
-      if (formData.video) {
-        toast.loading('🎬 Uploading video...', { id: loadingToastId });
-        videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
-      }
-
-      // Step 3: Save to database
-      toast.loading('💾 Saving your surprise...', { id: loadingToastId });
-
-      const surpriseData = {
-        name: formData.name,
-        occasion: formData.occasion,
-        unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
-        cake: formData.cake,
-        bond: formData.bond,
-        vibe: formData.vibe,
-        friend: formData.friend,
-        letter: formData.letter,
-        images: imageUrls,
-        music: musicUrl,
-        video: videoUrl,
-        selectedStyle: selectedStyle,
-        status: 'active',
-        createdAt: new Date().toISOString(),
-        paymentInfo: {
-          orderId: paymentResult.orderId,
-          paymentId: paymentResult.data?.razorpay_payment_id,
-          amount: 199
+      if (paymentResult.success) {
+        // Upload all files after payment succeeds
+        const imageUrls = [];
+        for (const image of formData.images) {
+          const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
+          imageUrls.push(url);
         }
-      };
 
-      const surpriseId = await createSurprise(surpriseData);
+        let musicUrl = null;
+        if (formData.music) {
+          musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
+        }
 
-      // Success!
-      toast.dismiss(loadingToastId);
-      toast.success('🎉 Surprise created successfully! 🎉');
-      navigate(`/payment-success/${surpriseId}`, { replace: true });
+        let videoUrl = null;
+        if (formData.video) {
+          videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
+        }
 
+        // Prepare surprise data
+        const surpriseData = {
+          name: formData.name,
+          occasion: formData.occasion,
+          unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
+          cake: formData.cake,
+          bond: formData.bond,
+          vibe: formData.vibe,
+          friend: formData.friend,
+          letter: formData.letter,
+          images: imageUrls,
+          music: musicUrl,
+          video: videoUrl,
+          selectedStyle: selectedStyle,
+          status: 'active', // directly active since payment succeeded
+          createdAt: new Date().toISOString(),
+          paymentInfo: paymentResult // store payment details if needed
+        };
+
+        console.log("After payment going to seve order with data: ")
+        // Create surprise in database
+        const surpriseId = await createSurprise(surpriseData);
+
+        toast.success('Payment successful and surprise created! 🎉');
+        navigate(`/payment-success/${surpriseId}`);
+      } else {
+        toast.error('Payment failed. Please try again.');
+        // navigate(`/payment-failed`);
+      }
     } catch (error) {
       console.error('Submit error:', error);
-      toast.dismiss(loadingToastId);
       toast.error('Failed to process: ' + error.message);
     } finally {
       setUploading(false);
     }
   };
+
+  // const handleSubmit = async (e) => {
+  //   if (e) e.preventDefault();
+
+  //   if (!formData.name || !formData.unlockDate) {
+  //     toast.error('Please fill in all required fields');
+  //     return;
+  //   }
+
+  //   if (uploading) return;
+
+  //   setUploading(true);
+  //   let loadingToastId = null;
+
+  //   try {
+  //     // Step 1: Take payment
+  //     loadingToastId = toast.loading('💳 Processing payment...');
+
+  //     //const paymentResult = await initiatePayment(null, 199);
+  //     const paymentResult = await initiatePayment(null, 10);
+
+  //     if (!paymentResult.success) {
+  //       toast.dismiss(loadingToastId);
+  //       toast.error('Payment failed. Please try again.');
+  //       setUploading(false);
+  //       return;
+  //     }
+
+  //     // Step 2: Payment successful - upload files
+  //     toast.loading('✅ Payment confirmed! Uploading your files...', { id: loadingToastId });
+
+  //     const imageUrls = [];
+  //     for (let i = 0; i < formData.images.length; i++) {
+  //       const image = formData.images[i];
+  //       const url = await uploadFile(image, `surprises/${Date.now()}_${image.name}`);
+  //       imageUrls.push(url);
+  //       toast.loading(`📸 Uploading images... (${i + 1}/${formData.images.length})`, { id: loadingToastId });
+  //     }
+
+  //     let musicUrl = null;
+  //     if (formData.music) {
+  //       toast.loading('🎵 Uploading music...', { id: loadingToastId });
+  //       musicUrl = await uploadFile(formData.music, `music/${Date.now()}_${formData.music.name}`);
+  //     }
+
+  //     let videoUrl = null;
+  //     if (formData.video) {
+  //       toast.loading('🎬 Uploading video...', { id: loadingToastId });
+  //       videoUrl = await uploadFile(formData.video, `videos/${Date.now()}_${formData.video.name}`);
+  //     }
+
+  //     // Step 3: Save to database
+  //     toast.loading('💾 Saving your surprise...', { id: loadingToastId });
+
+  //     const surpriseData = {
+  //       name: formData.name,
+  //       occasion: formData.occasion,
+  //       unlockDate: `${formData.unlockDate}T${formData.unlockTime || '00:00'}`,
+  //       cake: formData.cake,
+  //       bond: formData.bond,
+  //       vibe: formData.vibe,
+  //       friend: formData.friend,
+  //       letter: formData.letter,
+  //       images: imageUrls,
+  //       music: musicUrl,
+  //       video: videoUrl,
+  //       selectedStyle: selectedStyle,
+  //       status: 'active',
+  //       createdAt: new Date().toISOString(),
+  //       paymentInfo: {
+  //         orderId: paymentResult.orderId,
+  //         paymentId: paymentResult.data?.razorpay_payment_id,
+  //         amount: 199
+  //       }
+  //     };
+
+  //     const surpriseId = await createSurprise(surpriseData);
+
+  //     // Success!
+  //     toast.dismiss(loadingToastId);
+  //     toast.success('🎉 Surprise created successfully! 🎉');
+  //     navigate(`/payment-success/${surpriseId}`, { replace: true });
+
+  //   } catch (error) {
+  //     console.error('Submit error:', error);
+  //     toast.dismiss(loadingToastId);
+  //     toast.error('Failed to process: ' + error.message);
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
 
   const canShowPreview = () => {
     if (formData.images.length === 0) {

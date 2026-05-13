@@ -1,8 +1,8 @@
 import crypto from "crypto";
 
 const KEY_ID = process.env.RAZORPAY_KEY_ID;
-const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET; 
-// const KEY_SECRET = "pnd7hZD244O5hoq7ApHeRuZh";
+// const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET; 
+const KEY_SECRET = "pnd7hZD244O5hoq7ApHeRuZh";
 
 
 const allowedOrigins = [

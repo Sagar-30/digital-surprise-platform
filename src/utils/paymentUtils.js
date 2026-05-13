@@ -7,6 +7,7 @@ async function createOrderOnServer(amountInRupees, surpriseId) {
     ? 'http://localhost:8888/.netlify/functions/createOrder'
     : '/.netlify/functions/createOrder';
 
+  console.log("Inside createOrderOnServer",)
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -17,6 +18,7 @@ async function createOrderOnServer(amountInRupees, surpriseId) {
   });
 
   const data = await response.json();
+  console.log("Got result in createOrderOnServer: ",data);
   if (!response.ok) throw new Error(data.error || 'Failed to create order');
   return data;
 }
@@ -57,7 +59,7 @@ function loadRazorpayScript() {
 }
 
 // Main payment function
-export async function initiatePayment(surpriseId, amount = 199) {
+export async function initiatePayment(surpriseId="123456789234891", amount = 199) {
   let loadingToastId = null;
 
   try {
@@ -65,7 +67,9 @@ export async function initiatePayment(surpriseId, amount = 199) {
     loadingToastId = toast.loading('Preparing payment...');
 
     // Step 1: Create order on server
+    console.log("Going to create order on server");
     const orderData = await createOrderOnServer(amount, surpriseId);
+    console.log("Server order created");
 
     // Step 2: Load Razorpay script
     await loadRazorpayScript();
