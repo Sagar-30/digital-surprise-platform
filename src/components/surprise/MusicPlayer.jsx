@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-const MusicPlayer = ({ src, autoPlay = true }) => {
+const MusicPlayer = ({ src = '/default.mp3', autoPlay = true }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showPlayButton, setShowPlayButton] = useState(autoPlay);
@@ -9,8 +9,9 @@ const MusicPlayer = ({ src, autoPlay = true }) => {
   
   useEffect(() => {
     if (!src) return;
-    
+    console.log("Music component loaded");
     audioRef.current = new Audio(src);
+    // audioRef.current = new Audio(src);
     audioRef.current.loop = true;
     audioRef.current.volume = 0.5;
     

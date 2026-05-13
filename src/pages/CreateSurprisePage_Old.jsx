@@ -489,7 +489,7 @@ With all my love,
       // Initiate payment first
       console.log("Initiating payment");
       
-      const paymentResult = await initiatePayment(null, 10);
+      const paymentResult = await initiatePayment(null, 199);
 
       console.log("after Payment got result: ",paymentResult);
 

@@ -19,7 +19,7 @@ import CompletionComponent from '../components/surprise/CompletionComponent';
 const SurpriseViewerPage = () => {
   const { id } = useParams();
   const { getSurprise, currentSurprise, isLoading } = useSurpriseStore();
-  const [stage, setStage] = useState('cake'); //countdown
+  const [stage, setStage] = useState('countdown'); //countdown
   const [showConfetti, setShowConfetti] = useState(false);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -146,7 +146,8 @@ const SurpriseViewerPage = () => {
   return (
     <div className="min-h-screen py-12 relative overflow-hidden bg-gradient-to-br from-gray-950 via-blue-950 to-indigo-950">
       {showConfetti && <ReactConfetti />}
-      {currentSurprise.music && <MusicPlayer src={currentSurprise.music} autoPlay />}
+      {/* {currentSurprise.music && <MusicPlayer src={currentSurprise.music} autoPlay />} */}
+      {currentSurprise.music ? <MusicPlayer src={currentSurprise.music} autoPlay /> : <MusicPlayer autoPlay />}
 
       <div className="container mx-auto px-4 relative z-10">
         <AnimatePresence mode="wait">
