@@ -7,7 +7,7 @@ async function createOrderOnServer(amountInRupees, surpriseId) {
     ? 'http://localhost:8888/.netlify/functions/createOrder'
     : '/.netlify/functions/createOrder';
 
-  console.log("Inside createOrderOnServer",)
+  console.log("Inside   ",)
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -59,86 +59,160 @@ function loadRazorpayScript() {
 }
 
 // Main payment function
-export async function initiatePayment(surpriseId="123456789234891", amount = 199) {
+// export async function initiatePayment(surpriseId="123456789234891", amount = 199) {
+//   let loadingToastId = null;
+
+//   try {
+//     // Show loading toast
+//     loadingToastId = toast.loading('Preparing payment...');
+
+//     // Step 1: Create order on server
+//     console.log("Going to create order on server");
+//     const orderData = await createOrderOnServer(amount, surpriseId);
+//     console.log("Server order created");
+
+//     // Step 2: Load Razorpay script
+//     await loadRazorpayScript();
+
+//     // Step 3: Open Razorpay checkout
+//     const options = {
+//       key: orderData.keyId,
+//       amount: orderData.amount,
+//       currency: orderData.currency,
+//       order_id: orderData.orderId,
+//       name: 'Digital Surprise Box',
+//       description: 'Create a magical birthday surprise',
+//       image: 'https://splendorous-kitten-8af09b.netlify.app/favicon.svg',
+//       prefill: {
+//         name: '',
+//         email: '',
+//         contact: '',
+//       },
+//       theme: {
+//         color: '#ec4899',
+//       },
+//       modal: {
+//         ondismiss: () => {
+//           toast.dismiss(loadingToastId);
+//           toast.error('Payment cancelled');
+//         },
+//       },
+//       handler: async (response) => {
+//         try {
+//           toast.loading('Verifying payment...', { id: loadingToastId });
+
+//           const verificationData = await verifyPaymentOnServer({
+//             razorpay_order_id: response.razorpay_order_id,
+//             razorpay_payment_id: response.razorpay_payment_id,
+//             razorpay_signature: response.razorpay_signature,
+//             surpriseId: surpriseId,
+//           });
+
+//           if (verificationData.success) {
+//             toast.success('Payment successful! 🎉', { id: loadingToastId });
+//             resolve({
+//               success: true,
+//               data: verificationData,
+//               orderId: orderData.orderId,
+//               paymentId: response.razorpay_payment_id  // Add this
+//             });
+//           } else {
+//             throw new Error('Verification failed');
+//           }
+//         } catch (error) {
+//           toast.error(error.message || 'Payment verification failed', { id: loadingToastId });
+//           resolve({ success: false, error: error.message, orderId: orderData.orderId });
+//         }
+//       },
+//     };
+
+//     const razorpay = new window.Razorpay(options);
+//     razorpay.open();
+
+//     return { success: true, orderId: orderData.orderId };
+
+//   } catch (error) {
+//     if (loadingToastId) {
+//       toast.error(error.message || 'Payment failed. Please try again.', { id: loadingToastId });
+//     } else {
+//       toast.error(error.message || 'Payment failed. Please try again.');
+//     }
+//     return { success: false, error: error.message };
+//   }
+// }
+export async function initiatePayment(surpriseId = "123456789234891", amount = 199) {
   let loadingToastId = null;
 
-  try {
-    // Show loading toast
-    loadingToastId = toast.loading('Preparing payment...');
+  return new Promise(async (resolve) => {
+    try {
+      // Show loading toast
+      loadingToastId = toast.loading('Preparing payment...');
 
-    // Step 1: Create order on server
-    console.log("Going to create order on server");
-    const orderData = await createOrderOnServer(amount, surpriseId);
-    console.log("Server order created");
+      // Step 1: Create order on server
+      const orderData = await createOrderOnServer(amount, surpriseId);
 
-    // Step 2: Load Razorpay script
-    await loadRazorpayScript();
+      // Step 2: Load Razorpay script
+      await loadRazorpayScript();
 
-    // Step 3: Open Razorpay checkout
-    const options = {
-      key: orderData.keyId,
-      amount: orderData.amount,
-      currency: orderData.currency,
-      order_id: orderData.orderId,
-      name: 'Digital Surprise Box',
-      description: 'Create a magical birthday surprise',
-      image: 'https://splendorous-kitten-8af09b.netlify.app/favicon.svg',
-      prefill: {
-        name: '',
-        email: '',
-        contact: '',
-      },
-      theme: {
-        color: '#ec4899',
-      },
-      modal: {
-        ondismiss: () => {
-          toast.dismiss(loadingToastId);
-          toast.error('Payment cancelled');
+      // Step 3: Open Razorpay checkout
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        order_id: orderData.orderId,
+        name: 'Digital Surprise Box',
+        description: 'Create a magical birthday surprise',
+        image: 'https://splendorous-kitten-8af09b.netlify.app/favicon.svg',
+        prefill: { name: '', email: '', contact: '' },
+        theme: { color: '#ec4899' },
+        modal: {
+          ondismiss: () => {
+            toast.dismiss(loadingToastId);
+            toast.error('Payment cancelled');
+            resolve({ success: false, error: 'Payment cancelled', orderId: orderData.orderId });
+          },
         },
-      },
-      handler: async (response) => {
-        try {
-          toast.loading('Verifying payment...', { id: loadingToastId });
+        handler: async (response) => {
+          try {
+            toast.loading('Verifying payment...', { id: loadingToastId });
 
-          const verificationData = await verifyPaymentOnServer({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            surpriseId: surpriseId,
-          });
-
-          if (verificationData.success) {
-            toast.success('Payment successful! 🎉', { id: loadingToastId });
-            resolve({
-              success: true,
-              data: verificationData,
-              orderId: orderData.orderId,
-              paymentId: response.razorpay_payment_id  // Add this
+            const verificationData = await verifyPaymentOnServer({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              surpriseId,
             });
-          } else {
-            throw new Error('Verification failed');
+
+            if (verificationData.success) {
+              toast.success('Payment successful! 🎉', { id: loadingToastId });
+              resolve({
+                success: true,
+                data: verificationData,
+                orderId: orderData.orderId,
+                paymentId: response.razorpay_payment_id,
+              });
+            } else {
+              throw new Error('Verification failed');
+            }
+          } catch (error) {
+            toast.error(error.message || 'Payment verification failed', { id: loadingToastId });
+            resolve({ success: false, error: error.message, orderId: orderData.orderId });
           }
-        } catch (error) {
-          toast.error(error.message || 'Payment verification failed', { id: loadingToastId });
-          resolve({ success: false, error: error.message, orderId: orderData.orderId });
-        }
-      },
-    };
+        },
+      };
 
-    const razorpay = new window.Razorpay(options);
-    razorpay.open();
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
 
-    return { success: true, orderId: orderData.orderId };
-
-  } catch (error) {
-    if (loadingToastId) {
-      toast.error(error.message || 'Payment failed. Please try again.', { id: loadingToastId });
-    } else {
-      toast.error(error.message || 'Payment failed. Please try again.');
+    } catch (error) {
+      if (loadingToastId) {
+        toast.error(error.message || 'Payment failed. Please try again.', { id: loadingToastId });
+      } else {
+        toast.error(error.message || 'Payment failed. Please try again.');
+      }
+      resolve({ success: false, error: error.message });
     }
-    return { success: false, error: error.message };
-  }
+  });
 }
 
 // Alternative: Simplified version with callback
